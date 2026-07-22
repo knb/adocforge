@@ -4,6 +4,10 @@ export {
   registerAdocForgeEditor,
 } from './adoc-forge-editor.js'
 export type {
+  AdocForgeAIDecisionDetail,
+  AdocForgeAIErrorDetail,
+  AdocForgeAIProposalDetail,
+  AdocForgeAIRequestDetail,
   AdocForgeChangeDetail,
   AdocForgeImportDetail,
   AdocForgeImportErrorDetail,

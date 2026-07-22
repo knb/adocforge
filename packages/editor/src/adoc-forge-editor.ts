@@ -1,15 +1,30 @@
 import { basicSetup } from 'codemirror'
 import { Compartment, EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
+import { streamAIOperation } from '@adocforge/ai'
+import type { AIOperation, AIProvider } from '@adocforge/ai'
 import { createAsciiDocProcessor } from '@adocforge/core'
 import type { AdocDocument, AsciiDocProcessor, OutlineItem, StorageAdapter } from '@adocforge/core'
 import DOMPurify from 'dompurify'
 import { LitElement, css, html } from 'lit'
 import type { PropertyValues } from 'lit'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
-import { createElement, Download, Import as ImportIcon } from 'lucide'
+import {
+  Check,
+  createElement,
+  Download,
+  Import as ImportIcon,
+  ListCollapse,
+  TextCursorInput,
+  WandSparkles,
+  X,
+} from 'lucide'
 
 import type {
+  AdocForgeAIDecisionDetail,
+  AdocForgeAIErrorDetail,
+  AdocForgeAIProposalDetail,
+  AdocForgeAIRequestDetail,
   AdocForgeChangeDetail,
   AdocForgeImportDetail,
   AdocForgeImportErrorDetail,
@@ -18,6 +33,17 @@ import type {
 } from './events.js'
 
 type SaveStatus = 'idle' | 'loading' | 'unsaved' | 'saving' | 'saved' | 'error'
+type AIStatus = 'idle' | 'running' | 'proposal' | 'error'
+
+interface AIProposal {
+  from: number
+  input: string
+  instruction?: string
+  operation: AIOperation
+  replacement: string
+  source: string
+  to: number
+}
 
 const MAX_IMPORT_BYTES = 10 * 1024 * 1024
 const ASCIIDOC_MIME_TYPE = 'text/asciidoc;charset=utf-8'
@@ -26,6 +52,7 @@ export const ADOC_FORGE_EDITOR_TAG = 'adoc-forge-editor' as const
 
 export class AdocForgeEditor extends LitElement {
   static properties = {
+    aiProvider: { attribute: false },
     autosaveDelay: { type: Number, attribute: 'autosave-delay' },
     documentId: { type: String, attribute: 'document-id' },
     label: { type: String },
@@ -119,6 +146,52 @@ export class AdocForgeEditor extends LitElement {
       font-size: 0.8125rem;
     }
 
+    .ai-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      margin-block: 0.5rem;
+      padding-block-start: 0.5rem;
+      border-block-start: 1px solid var(--adocforge-divider-color, #c4c7c5);
+    }
+
+    .ai-result {
+      margin-block-start: 0.75rem;
+      padding-block-start: 0.75rem;
+      border-block-start: 1px solid var(--adocforge-divider-color, #c4c7c5);
+    }
+
+    .ai-result-heading {
+      margin: 0 0 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .ai-result-output {
+      max-block-size: 16rem;
+      margin: 0;
+      padding: 0.75rem;
+      overflow: auto;
+      border: 1px solid var(--adocforge-border-color, #747775);
+      border-radius: 4px;
+      background: var(--adocforge-proposal-background, #f8f9fa);
+      font-family: var(--adocforge-editor-font, ui-monospace, monospace);
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .ai-result-status,
+    .ai-stale {
+      margin: 0 0 0.5rem;
+      color: var(--adocforge-muted-color, #5f6368);
+      font-size: 0.8125rem;
+    }
+
+    .ai-error,
+    .ai-stale {
+      color: var(--adocforge-error-color, #b3261e);
+    }
+
     .save-status {
       color: var(--adocforge-muted-color, #5f6368);
       font-size: 0.8125rem;
@@ -203,6 +276,7 @@ export class AdocForgeEditor extends LitElement {
   `
 
   declare autosaveDelay: number
+  declare aiProvider: AIProvider | undefined
   declare documentId: string
   declare label: string
   declare previewDelay: number
@@ -212,6 +286,13 @@ export class AdocForgeEditor extends LitElement {
   declare value: string
 
   readonly #readonlyCompartment = new Compartment()
+  #aiAbortController: AbortController | undefined
+  #aiError = ''
+  #aiGeneration = 0
+  #aiOutput = ''
+  #aiProposal: AIProposal | undefined
+  #aiRequest: AdocForgeAIRequestDetail | undefined
+  #aiStatus: AIStatus = 'idle'
   #documentCreatedAt = ''
   #documentRevision = 0
   #documentTitle = ''
@@ -233,6 +314,7 @@ export class AdocForgeEditor extends LitElement {
 
   constructor() {
     super()
+    this.aiProvider = undefined
     this.autosaveDelay = 1000
     this.documentId = ''
     this.label = 'AsciiDoc source'
@@ -290,6 +372,7 @@ export class AdocForgeEditor extends LitElement {
           </div>
           ${this.#fileError ? html`<p class="file-error" role="alert">${this.#fileError}</p>` : null}
           <div class="editor-surface"></div>
+          ${this.aiProvider ? this.#renderAIActions() : null} ${this.#renderAIResult()}
         </div>
         <aside class="reference-pane" aria-label="Document reference">
           <nav class="outline" aria-labelledby="outline-heading">
@@ -323,6 +406,7 @@ export class AdocForgeEditor extends LitElement {
           this.#readonlyCompartment.of(this.#readonlyExtensions()),
           EditorView.contentAttributes.of({ 'aria-labelledby': 'editor-label' }),
           EditorView.updateListener.of((update) => {
+            if (update.selectionSet) this.requestUpdate()
             if (!update.docChanged || this.#syncingExternalValue) return
 
             this.#commitUserValue(update.state.doc.toString())
@@ -364,6 +448,9 @@ export class AdocForgeEditor extends LitElement {
   }
 
   disconnectedCallback(): void {
+    this.#aiGeneration++
+    this.#aiAbortController?.abort()
+    this.#aiAbortController = undefined
     if (this.#previewTimer !== undefined) clearTimeout(this.#previewTimer)
     if (this.#saveTimer !== undefined) clearTimeout(this.#saveTimer)
     this.#previewGeneration++
@@ -429,6 +516,100 @@ export class AdocForgeEditor extends LitElement {
     setTimeout(() => URL.revokeObjectURL(url), 0)
   }
 
+  async requestAI(operation: AIOperation, instruction?: string): Promise<void> {
+    const provider = this.aiProvider
+    const view = this.#editorView
+    if (!provider) throw new Error('AI provider is not configured')
+    if (!view) throw new Error('Editor is not ready')
+    if (this.#aiStatus === 'running' || this.#aiStatus === 'proposal') {
+      throw new Error('Resolve the current AI operation before starting another')
+    }
+
+    const selection = view.state.selection.main
+    const input = view.state.doc.sliceString(selection.from, selection.to)
+    if (input.trim().length === 0) {
+      const error = new Error('Select text before using an AI operation')
+      this.#setAIError(operation, error)
+      throw error
+    }
+
+    const request: AdocForgeAIRequestDetail =
+      instruction === undefined ? { operation, input } : { operation, input, instruction }
+    const generation = ++this.#aiGeneration
+    const controller = new AbortController()
+    this.#aiAbortController = controller
+    this.#aiError = ''
+    this.#aiOutput = ''
+    this.#aiProposal = undefined
+    this.#aiRequest = request
+    this.#aiStatus = 'running'
+    this.#dispatchAIEvent('adocforge-ai-start', request)
+    this.requestUpdate()
+
+    try {
+      for await (const chunk of streamAIOperation(provider, request, controller.signal)) {
+        if (generation !== this.#aiGeneration) return
+        this.#aiOutput += chunk.delta
+        this.requestUpdate()
+      }
+      if (generation !== this.#aiGeneration) return
+
+      this.#aiProposal = {
+        from: selection.from,
+        input,
+        operation,
+        replacement: this.#aiOutput,
+        source: view.state.doc.toString(),
+        to: selection.to,
+        ...(instruction === undefined ? {} : { instruction }),
+      }
+      this.#aiStatus = 'proposal'
+      this.#dispatchAIEvent('adocforge-ai-proposal', this.#proposalDetail(this.#aiProposal))
+      this.requestUpdate()
+    } catch (error: unknown) {
+      if (generation !== this.#aiGeneration) return
+      this.#setAIError(operation, error)
+      throw error
+    } finally {
+      if (generation === this.#aiGeneration) this.#aiAbortController = undefined
+    }
+  }
+
+  cancelAI(): void {
+    if (this.#aiStatus !== 'running' || !this.#aiRequest) return
+    const request = this.#aiRequest
+    this.#aiGeneration++
+    this.#aiAbortController?.abort()
+    this.#resetAIState()
+    this.#dispatchAIEvent('adocforge-ai-cancel', request)
+  }
+
+  acceptAIProposal(): void {
+    const proposal = this.#aiProposal
+    const view = this.#editorView
+    if (!proposal || !view) return
+    if (this.#isAIProposalStale()) throw new Error('AI proposal is stale')
+
+    const detail = this.#proposalDetail(proposal)
+    this.#resetAIState()
+    view.dispatch({
+      changes: { from: proposal.from, to: proposal.to, insert: proposal.replacement },
+      selection: { anchor: proposal.from + proposal.replacement.length },
+    })
+    this.#dispatchAIEvent<AdocForgeAIDecisionDetail>('adocforge-ai-accept', {
+      ...detail,
+      value: view.state.doc.toString(),
+    })
+  }
+
+  rejectAIProposal(): void {
+    const proposal = this.#aiProposal
+    if (!proposal) return
+    const detail = this.#proposalDetail(proposal)
+    this.#resetAIState()
+    this.#dispatchAIEvent('adocforge-ai-reject', detail)
+  }
+
   #commitUserValue(value: string): void {
     this.value = value
     this.#editVersion++
@@ -465,13 +646,21 @@ export class AdocForgeEditor extends LitElement {
   }
 
   #renderActionIcons(): void {
-    const importContainer = this.renderRoot.querySelector('.import-icon')
-    const exportContainer = this.renderRoot.querySelector('.export-icon')
-    if (importContainer && importContainer.childElementCount === 0) {
-      importContainer.append(createElement(ImportIcon, { 'stroke-width': 2 }))
-    }
-    if (exportContainer && exportContainer.childElementCount === 0) {
-      exportContainer.append(createElement(Download, { 'stroke-width': 2 }))
+    const icons = [
+      ['.import-icon', ImportIcon],
+      ['.export-icon', Download],
+      ['.rewrite-icon', WandSparkles],
+      ['.summarize-icon', ListCollapse],
+      ['.continue-icon', TextCursorInput],
+      ['.cancel-ai-icon', X],
+      ['.accept-ai-icon', Check],
+      ['.reject-ai-icon', X],
+    ] as const
+    for (const [selector, icon] of icons) {
+      const container = this.renderRoot.querySelector(selector)
+      if (container && container.childElementCount === 0) {
+        container.append(createElement(icon, { 'stroke-width': 2 }))
+      }
     }
   }
 
@@ -482,6 +671,148 @@ export class AdocForgeEditor extends LitElement {
   #normalizeFilename(filename: string): string {
     const trimmed = filename.trim() || 'document'
     return /\.(?:adoc|asciidoc)$/i.test(trimmed) ? trimmed : `${trimmed}.adoc`
+  }
+
+  #renderAIActions(): unknown {
+    const disabled =
+      this.readonly ||
+      !this.#hasSelection() ||
+      this.#aiStatus === 'running' ||
+      this.#aiStatus === 'proposal'
+    return html`<div class="ai-actions" aria-label="AI actions">
+      <button
+        class="editor-action rewrite-action"
+        type="button"
+        ?disabled=${disabled}
+        @click=${() => void this.#requestAIFromToolbar('rewrite')}
+      >
+        <span class="editor-action-icon rewrite-icon" aria-hidden="true"></span>
+        <span>Rewrite</span>
+      </button>
+      <button
+        class="editor-action summarize-action"
+        type="button"
+        ?disabled=${disabled}
+        @click=${() => void this.#requestAIFromToolbar('summarize')}
+      >
+        <span class="editor-action-icon summarize-icon" aria-hidden="true"></span>
+        <span>Summarize</span>
+      </button>
+      <button
+        class="editor-action continue-action"
+        type="button"
+        ?disabled=${disabled}
+        @click=${() => void this.#requestAIFromToolbar('continue')}
+      >
+        <span class="editor-action-icon continue-icon" aria-hidden="true"></span>
+        <span>Continue</span>
+      </button>
+    </div>`
+  }
+
+  #renderAIResult(): unknown {
+    if (this.#aiStatus === 'idle') return null
+    if (this.#aiStatus === 'error') {
+      return html`<section class="ai-result" aria-labelledby="ai-result-heading">
+        <h2 class="ai-result-heading" id="ai-result-heading">AI proposal</h2>
+        <p class="ai-error" role="alert">${this.#aiError}</p>
+      </section>`
+    }
+
+    const stale = this.#aiStatus === 'proposal' && this.#isAIProposalStale()
+    return html`<section class="ai-result" aria-labelledby="ai-result-heading">
+      <h2 class="ai-result-heading" id="ai-result-heading">AI proposal</h2>
+      ${
+        this.#aiStatus === 'running'
+          ? html`<p class="ai-result-status" aria-live="polite">Generating proposal</p>`
+          : null
+      }
+      ${stale ? html`<p class="ai-stale" role="alert">The document changed after this request.</p>` : null}
+      <pre class="ai-result-output" aria-live="polite">${this.#aiOutput}</pre>
+      <div class="ai-actions">
+        ${
+          this.#aiStatus === 'running'
+            ? html`<button
+                class="editor-action cancel-ai-action"
+                type="button"
+                @click=${() => this.cancelAI()}
+              >
+                <span class="editor-action-icon cancel-ai-icon" aria-hidden="true"></span>
+                <span>Cancel</span>
+              </button>`
+            : html`
+                <button
+                  class="editor-action accept-ai-action"
+                  type="button"
+                  ?disabled=${stale}
+                  @click=${() => this.acceptAIProposal()}
+                >
+                  <span class="editor-action-icon accept-ai-icon" aria-hidden="true"></span>
+                  <span>Accept</span>
+                </button>
+                <button
+                  class="editor-action reject-ai-action"
+                  type="button"
+                  @click=${() => this.rejectAIProposal()}
+                >
+                  <span class="editor-action-icon reject-ai-icon" aria-hidden="true"></span>
+                  <span>Reject</span>
+                </button>
+              `
+        }
+      </div>
+    </section>`
+  }
+
+  async #requestAIFromToolbar(operation: AIOperation): Promise<void> {
+    try {
+      await this.requestAI(operation)
+    } catch {
+      // requestAI exposes failures through visible state and an event.
+    }
+  }
+
+  #hasSelection(): boolean {
+    const selection = this.#editorView?.state.selection.main
+    return selection !== undefined && selection.from !== selection.to
+  }
+
+  #isAIProposalStale(): boolean {
+    return this.#aiProposal !== undefined && this.value !== this.#aiProposal.source
+  }
+
+  #proposalDetail(proposal: AIProposal): AdocForgeAIProposalDetail {
+    return {
+      operation: proposal.operation,
+      input: proposal.input,
+      replacement: proposal.replacement,
+      ...(proposal.instruction === undefined ? {} : { instruction: proposal.instruction }),
+    }
+  }
+
+  #setAIError(operation: AIOperation, error: unknown): void {
+    this.#aiAbortController = undefined
+    this.#aiError = error instanceof Error ? error.message : 'AI operation failed'
+    this.#aiOutput = ''
+    this.#aiProposal = undefined
+    this.#aiRequest = undefined
+    this.#aiStatus = 'error'
+    this.#dispatchAIEvent<AdocForgeAIErrorDetail>('adocforge-ai-error', { operation, error })
+    this.requestUpdate()
+  }
+
+  #resetAIState(): void {
+    this.#aiAbortController = undefined
+    this.#aiError = ''
+    this.#aiOutput = ''
+    this.#aiProposal = undefined
+    this.#aiRequest = undefined
+    this.#aiStatus = 'idle'
+    this.requestUpdate()
+  }
+
+  #dispatchAIEvent<T>(type: string, detail: T): void {
+    this.dispatchEvent(new CustomEvent<T>(type, { bubbles: true, composed: true, detail }))
   }
 
   #readonlyExtensions() {

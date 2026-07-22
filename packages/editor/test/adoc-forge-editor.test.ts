@@ -2,6 +2,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { AsciiDocProcessor } from '@adocforge/core'
+import type { AIProvider } from '@adocforge/ai'
 
 import { ADOC_FORGE_EDITOR_TAG, AdocForgeEditor, registerAdocForgeEditor } from '../src/index.js'
 
@@ -108,6 +109,25 @@ describe('AdocForgeEditor', () => {
 
     expect(blob.type).toBe('text/asciidoc;charset=utf-8')
     expect(await blob.text()).toBe('= Exported')
+  })
+
+  it('reports an AI error without calling the provider when no text is selected', async () => {
+    registerAdocForgeEditor()
+    const complete = vi.fn().mockResolvedValue({ replacement: 'Unused' })
+    const editor = document.createElement(ADOC_FORGE_EDITOR_TAG) as AdocForgeEditor
+    editor.aiProvider = { complete } satisfies AIProvider
+    editor.value = 'No selection'
+    const errors: unknown[] = []
+    editor.addEventListener('adocforge-ai-error', (event) => errors.push(event.detail.error))
+    document.body.append(editor)
+    await editor.updateComplete
+
+    await expect(editor.requestAI('rewrite')).rejects.toThrow('Select text')
+    await editor.updateComplete
+
+    expect(complete).not.toHaveBeenCalled()
+    expect(errors).toHaveLength(1)
+    expect(editor.shadowRoot?.querySelector('.ai-error')?.textContent).toContain('Select text')
   })
 
   it('debounces preview conversion and sanitizes rendered HTML', async () => {

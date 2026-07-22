@@ -63,3 +63,38 @@ test('imports and exports an AsciiDoc file', async ({ page }) => {
   expect(path).not.toBeNull()
   expect(await readFile(path, 'utf8')).toBe(imported)
 })
+
+test('keeps AI output as a proposal until it is accepted', async ({ page }) => {
+  await page.goto('/')
+
+  const editor = page.locator('adoc-forge-editor')
+  const source = editor.locator('.cm-content')
+  const original = await editor.evaluate(
+    (element) => (element as HTMLElement & { value: string }).value,
+  )
+
+  await source.click()
+  await page.keyboard.press('ControlOrMeta+A')
+  await editor.getByRole('button', { name: 'Summarize' }).click()
+  await expect(editor.locator('.ai-result-output')).toContainText('Summary:')
+  await expect
+    .poll(() => editor.evaluate((element) => (element as HTMLElement & { value: string }).value))
+    .toBe(original)
+
+  await editor.getByRole('button', { name: 'Reject' }).click()
+  await expect(editor.locator('.ai-result')).toHaveCount(0)
+  await expect
+    .poll(() => editor.evaluate((element) => (element as HTMLElement & { value: string }).value))
+    .toBe(original)
+
+  await source.click()
+  await page.keyboard.press('ControlOrMeta+A')
+  await editor.getByRole('button', { name: 'Rewrite' }).click()
+  await expect(editor.locator('.ai-result-output')).toContainText('AI Rewrite')
+  await editor.getByRole('button', { name: 'Accept' }).click()
+
+  await expect
+    .poll(() => editor.evaluate((element) => (element as HTMLElement & { value: string }).value))
+    .toContain('= AI Rewrite')
+  await expect(editor.locator('.save-status')).toHaveText('Saved')
+})

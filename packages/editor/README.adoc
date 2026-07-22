@@ -25,6 +25,8 @@ Registration is explicit and idempotent. Importing the package does not modify t
 
 `processor: AsciiDocProcessor`:: Replaceable conversion implementation. Defaults to `@adocforge/core`.
 
+`aiProvider: AIProvider`:: Optional host-provided AI adapter. AI controls are hidden until configured.
+
 `documentId: string`:: Storage key used for restore and autosave.
 
 `storage: StorageAdapter`:: Host-provided persistence implementation.
@@ -39,6 +41,12 @@ Registration is explicit and idempotent. Importing the package does not modify t
 
 `downloadDocument(filename?)`:: Downloads the canonical source. The `.adoc` extension is appended when needed.
 
+`requestAI(operation, instruction?)`:: Generates a proposal from the explicit CodeMirror selection.
+
+`cancelAI()`:: Cancels the active generation.
+
+`acceptAIProposal()` / `rejectAIProposal()`:: Resolves the current proposal. Only acceptance changes the source.
+
 The CodeMirror `EditorView` is private and is not part of the public API.
 
 == Events
@@ -46,6 +54,8 @@ The CodeMirror `EditorView` is private and is not part of the public API.
 `adocforge-change` bubbles across the Shadow DOM boundary after a user edit. Its detail is `{ value: string }`. Assigning `value` from the host does not emit this event.
 
 `adocforge-import` reports `{ name, size, value }` after a successful import. `adocforge-import-error` reports `{ error }` and leaves the current document unchanged.
+
+AI operations emit `adocforge-ai-start`, then `adocforge-ai-proposal` or `adocforge-ai-error`. User decisions emit `adocforge-ai-accept`, `adocforge-ai-reject`, or `adocforge-ai-cancel`.
 
 `adocforge-load` and `adocforge-save` report `{ documentId, revision, updatedAt }` after persistence completes. `adocforge-load-error` and `adocforge-save-error` report `{ documentId, error }`.
 
@@ -70,3 +80,7 @@ The editor restores the document when `storage` and `documentId` are configured,
 == File Import and Export
 
 The built-in Import and Export commands use the same public methods described above. Imported content follows the normal `adocforge-change` and autosave path. Hosts that provide their own file UI can call `importDocument()` and `createExportBlob()` directly.
+
+== AI Proposals
+
+The host controls the provider and transmission policy. AdocForge sends only the selected source and an optional instruction. Streaming output is displayed separately and never changes the canonical source until Accept is selected. A proposal becomes stale and cannot be accepted if the source changes after the request.

@@ -1,4 +1,25 @@
+import type { AIOperation } from '@adocforge/ai'
+
 export interface AdocForgeChangeDetail {
+  value: string
+}
+
+export interface AdocForgeAIRequestDetail {
+  operation: AIOperation
+  input: string
+  instruction?: string
+}
+
+export interface AdocForgeAIProposalDetail extends AdocForgeAIRequestDetail {
+  replacement: string
+}
+
+export interface AdocForgeAIErrorDetail {
+  operation: AIOperation
+  error: unknown
+}
+
+export interface AdocForgeAIDecisionDetail extends AdocForgeAIProposalDetail {
   value: string
 }
 
@@ -25,6 +46,12 @@ export interface AdocForgePersistenceErrorDetail {
 
 declare global {
   interface HTMLElementEventMap {
+    'adocforge-ai-accept': CustomEvent<AdocForgeAIDecisionDetail>
+    'adocforge-ai-cancel': CustomEvent<AdocForgeAIRequestDetail>
+    'adocforge-ai-error': CustomEvent<AdocForgeAIErrorDetail>
+    'adocforge-ai-proposal': CustomEvent<AdocForgeAIProposalDetail>
+    'adocforge-ai-reject': CustomEvent<AdocForgeAIProposalDetail>
+    'adocforge-ai-start': CustomEvent<AdocForgeAIRequestDetail>
     'adocforge-change': CustomEvent<AdocForgeChangeDetail>
     'adocforge-import': CustomEvent<AdocForgeImportDetail>
     'adocforge-import-error': CustomEvent<AdocForgeImportErrorDetail>

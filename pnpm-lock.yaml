@@ -81,6 +81,9 @@ importers:
 
   apps/playground:
     dependencies:
+      '@adocforge/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@adocforge/editor':
         specifier: workspace:*
         version: link:../../packages/editor

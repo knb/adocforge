@@ -31,7 +31,7 @@
 
 * [x] Implement vendor-independent rewrite, summarize, and continue operations.
 * [x] Support cancellation and optional streaming.
-* Require explicit Accept or Reject for generated changes.
+* [x] Require explicit Accept or Reject for generated changes.
 
 == Phase 5: Public Release
 
