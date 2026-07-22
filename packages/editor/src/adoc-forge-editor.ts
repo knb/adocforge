@@ -31,6 +31,7 @@ import type {
   AdocForgePersistenceDetail,
   AdocForgePersistenceErrorDetail,
 } from './events.js'
+import { asciidocLanguage } from './asciidoc-language.js'
 
 type SaveStatus = 'idle' | 'loading' | 'unsaved' | 'saving' | 'saved' | 'error'
 type AIStatus = 'idle' | 'running' | 'proposal' | 'error'
@@ -403,6 +404,7 @@ export class AdocForgeEditor extends LitElement {
         doc: this.value,
         extensions: [
           basicSetup,
+          asciidocLanguage,
           this.#readonlyCompartment.of(this.#readonlyExtensions()),
           EditorView.contentAttributes.of({ 'aria-labelledby': 'editor-label' }),
           EditorView.updateListener.of((update) => {

@@ -50,6 +50,24 @@ describe('AdocForgeEditor', () => {
     expect(content?.textContent).toBe('= Trail notes')
   })
 
+  it('highlights common AsciiDoc source constructs', async () => {
+    registerAdocForgeEditor()
+    const editor = document.createElement(ADOC_FORGE_EDITOR_TAG) as AdocForgeEditor
+    editor.value = '= Trail notes\n\n:author: Ada\n\nA *strong* <<target,link>>.'
+    document.body.append(editor)
+    await editor.updateComplete
+
+    const highlightedText = Array.from(
+      editor.shadowRoot?.querySelectorAll<HTMLElement>('.cm-content span') ?? [],
+      (element) => element.textContent,
+    )
+
+    expect(highlightedText).toContain('= Trail notes')
+    expect(highlightedText).toContain(':author:')
+    expect(highlightedText).toContain('*strong*')
+    expect(highlightedText).toContain('<<target,link>>')
+  })
+
   it('synchronizes external values without emitting a user change', async () => {
     registerAdocForgeEditor()
     const editor = document.createElement(ADOC_FORGE_EDITOR_TAG) as AdocForgeEditor
