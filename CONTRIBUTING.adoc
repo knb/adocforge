@@ -1,0 +1,35 @@
+= Contributing to AdocForge
+
+Thank you for improving AdocForge.
+
+== Before You Start
+
+Search existing issues before opening a new one. For behavior changes, describe the user problem and the package boundary involved. Discuss large public API or architecture changes in an issue before implementation.
+
+Do not open a public issue for a suspected vulnerability. Follow link:SECURITY.md[the security policy].
+
+== Development
+
+[source,shell]
+----
+corepack enable
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm format:check
+pnpm typecheck
+pnpm test
+pnpm build
+----
+
+Run `pnpm test:e2e` when user interface behavior changes. Add a Changeset for user-visible package changes:
+
+[source,shell]
+----
+pnpm changeset
+----
+
+== Pull Requests
+
+Keep changes focused. Include tests for behavior changes and update public documentation for API changes. Record decisions that alter package responsibilities or trust boundaries under `docs/decisions/`.
+
+By contributing, you agree that your contribution is licensed under the repository's MIT License.

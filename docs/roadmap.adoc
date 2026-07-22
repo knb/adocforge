@@ -7,7 +7,7 @@
 * [x] ESLint, Prettier, Vitest, Playwright, Changesets, and CI configuration
 * [x] Three public package entry points and a buildable playground
 * [x] Architecture document and ADR 0001 through 0004
-* [ ] Community and security policy documents
+* [x] Community and security policy documents
 
 == Phase 1: Core Conversion
 

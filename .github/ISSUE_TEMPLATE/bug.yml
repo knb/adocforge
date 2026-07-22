@@ -1,0 +1,40 @@
+name: Bug report
+description: Report reproducible incorrect behavior
+title: '[Bug]: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not report security vulnerabilities here. Follow SECURITY.md instead.
+  - type: dropdown
+    id: package
+    attributes:
+      label: Affected package
+      options:
+        - '@adocforge/core'
+        - '@adocforge/ai'
+        - '@adocforge/editor'
+        - Playground or tooling
+        - Unknown
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Actual behavior
+      description: Include the smallest reproducible example and any error output.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, Node.js version, operating system, and package version or commit.
+    validations:
+      required: true
