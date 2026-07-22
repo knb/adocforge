@@ -1,7 +1,7 @@
 lockfileVersion: '9.0'
 
 settings:
-  autoInstallPeers: false
+  autoInstallPeers: true
   excludeLinksFromLockfile: false
 
 importers:
@@ -33,8 +33,8 @@ importers:
         specifier: ^11.11.1
         version: 11.11.1
       katex:
-        specifier: ^0.16.11
-        version: 0.16.47
+        specifier: ^0.18.1
+        version: 0.18.1
     devDependencies:
       '@axe-core/playwright':
         specifier: 4.12.1
@@ -118,12 +118,42 @@ importers:
 
   legacy/packages/adoc-codemirror:
     dependencies:
+      '@asciidoctor/core':
+        specifier: ^4.0.4
+        version: 4.0.5
+      '@codemirror/state':
+        specifier: ^6.6.0
+        version: 6.7.1
+      '@codemirror/view':
+        specifier: ^6.43.0
+        version: 6.43.6
       '@kbmemo/adoc-kbmemo':
         specifier: 0.1.0
         version: link:../adoc-kbmemo
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.11.1
 
   legacy/packages/adoc-editor:
     dependencies:
+      '@asciidoctor/core':
+        specifier: ^4.0.4
+        version: 4.0.5
+      '@codemirror/autocomplete':
+        specifier: ^6.20.2
+        version: 6.20.3
+      '@codemirror/commands':
+        specifier: ^6.10.3
+        version: 6.10.4
+      '@codemirror/search':
+        specifier: ^6.5.11
+        version: 6.7.1
+      '@codemirror/state':
+        specifier: ^6.6.0
+        version: 6.7.1
+      '@codemirror/view':
+        specifier: ^6.43.0
+        version: 6.43.6
       '@kbmemo/adoc-codemirror':
         specifier: 0.1.0
         version: link:../adoc-codemirror
@@ -136,8 +166,30 @@ importers:
       '@kbmemo/adoc-wysiwyg':
         specifier: 0.1.0
         version: link:../adoc-wysiwyg
+      codemirror:
+        specifier: ^6.0.2
+        version: 6.0.2
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.11.1
+      katex:
+        specifier: ^0.16.11
+        version: 0.16.47
 
-  legacy/packages/adoc-kbmemo: {}
+  legacy/packages/adoc-kbmemo:
+    dependencies:
+      '@codemirror/autocomplete':
+        specifier: ^6.20.2
+        version: 6.20.3
+      '@codemirror/state':
+        specifier: ^6.6.0
+        version: 6.7.1
+      '@codemirror/view':
+        specifier: ^6.43.0
+        version: 6.43.6
+      katex:
+        specifier: ^0.16.11
+        version: 0.16.47
 
   legacy/packages/adoc-preview:
     dependencies:
@@ -147,9 +199,27 @@ importers:
       '@kbmemo/adoc-kbmemo':
         specifier: 0.1.0
         version: link:../adoc-kbmemo
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.11.1
+      katex:
+        specifier: ^0.16.11
+        version: 0.16.47
 
   legacy/packages/adoc-wysiwyg:
     dependencies:
+      '@codemirror/commands':
+        specifier: ^6.10.3
+        version: 6.10.4
+      '@codemirror/search':
+        specifier: ^6.5.11
+        version: 6.7.1
+      '@codemirror/state':
+        specifier: ^6.6.0
+        version: 6.7.1
+      '@codemirror/view':
+        specifier: ^6.43.0
+        version: 6.43.6
       '@kbmemo/adoc-codemirror':
         specifier: 0.1.0
         version: link:../adoc-codemirror
@@ -1429,6 +1499,10 @@ packages:
 
   katex@0.16.47:
     resolution: {integrity: sha512-Eeo8Ys1doU1z+x8AZsPpQu+p/QcZBI5PeOo7QGQdy2x2m0MU/hYagBbGOmXwr5KVbEfVuWv9LpnQWeehogurjg==}
+    hasBin: true
+
+  katex@0.18.1:
+    resolution: {integrity: sha512-Td8GCYSxDAoMhHOlKmCFMJ/hz5qlAAb71n66Dryw9nfCVfumLo7nhuotbvKom/XPADmrYC3O5QR71EPq4DarJQ==}
     hasBin: true
 
   keyv@4.5.4:
@@ -3348,6 +3422,10 @@ snapshots:
       graceful-fs: 4.2.11
 
   katex@0.16.47:
+    dependencies:
+      commander: 8.3.0
+
+  katex@0.18.1:
     dependencies:
       commander: 8.3.0
 
