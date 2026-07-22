@@ -6,6 +6,8 @@ The current architecture is implemented in `@adocforge/core`, `@adocforge/ai`, a
 
 See [ADOCFORGE_BOOTSTRAP.md](ADOCFORGE_BOOTSTRAP.md) for the product scope, architecture, implementation phases, and release requirements.
 
+Try the [AdocForge playground](https://knb.github.io/adocforge/) to edit AsciiDoc with syntax highlighting and inspect the live preview in a browser.
+
 Project documentation:
 
 - [Architecture](docs/architecture.adoc)
@@ -36,7 +38,7 @@ AdocForge exposes three package entry points:
 - Provider-independent AI rewrite, summarize, and continue proposals
 - Streaming, cancellation, and explicit Accept or Reject
 
-See the [API reference](docs/api.adoc) and the runnable `apps/playground` example for integration details.
+See the [API reference](docs/api.adoc), the [live playground](https://knb.github.io/adocforge/), and its source under `apps/playground` for integration details.
 
 ## Legacy Packages
 
@@ -75,7 +77,7 @@ pnpm --filter @adocforge/playground dev
 
 ## Install
 
-The packages are not yet published to npm. Publishing requires explicit release approval. After the first release:
+Install the published packages from npm:
 
 ```bash
 npm install @adocforge/core @adocforge/ai @adocforge/editor

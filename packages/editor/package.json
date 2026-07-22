@@ -1,6 +1,6 @@
 {
   "name": "@adocforge/editor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Framework-independent AdocForge editor Web Component",
   "license": "MIT",
   "repository": {

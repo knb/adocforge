@@ -1,5 +1,14 @@
 # @adocforge/editor
 
+## 0.1.1
+
+### Patch Changes
+
+- Add npm-rendered package documentation and enable lightweight AsciiDoc syntax highlighting in the editor.
+- Updated dependencies
+  - @adocforge/core@0.1.1
+  - @adocforge/ai@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
