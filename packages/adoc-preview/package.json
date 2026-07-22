@@ -8,11 +8,11 @@
     "./preview_hljs.css": "./dist/preview_hljs.css"
   },
   "publishConfig": {
-    "access": "restricted"
+    "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "https://gitea.artif.org/Artif.org/kbmemo_site.git",
+    "url": "git+https://github.com/knb/asciidoc-editor.git",
     "directory": "packages/adoc-preview"
   },
   "files": [
@@ -30,5 +30,13 @@
   "peerDependencies": {
     "highlight.js": "^11.11.1",
     "katex": "^0.16.11"
+  },
+  "homepage": "https://github.com/knb/asciidoc-editor#readme",
+  "bugs": {
+    "url": "https://github.com/knb/asciidoc-editor/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
   }
 }

@@ -1,2 +1,2 @@
-@kbmemo:registry=${NPM_PUBLISH_REGISTRY}
-//gitea.artif.org/api/packages/Artif.org/npm/:_authToken=${NPM_TOKEN}
+@kbmemo:registry=https://registry.npmjs.org/
+//registry.npmjs.org/:_authToken=${NPM_TOKEN}
