@@ -29,7 +29,7 @@
 
 == Phase 4: AI Assistance
 
-* Implement rewrite, summarize, and continue operations.
+* [x] Implement vendor-independent rewrite, summarize, and continue operations.
 * Support cancellation and optional streaming.
 * Require explicit Accept or Reject for generated changes.
 
