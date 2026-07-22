@@ -1,6 +1,6 @@
 {
   "name": "@adocforge/ai",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Vendor-independent AI provider contracts for AdocForge",
   "license": "MIT",
   "repository": {
