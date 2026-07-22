@@ -5,7 +5,6 @@ apps/*/dist/
 legacy/packages/*/dist/
 legacy/examples/*/dist/
 *.tgz
-.npmrc
 coverage/
 playwright-report/
 test-results/
