@@ -14,7 +14,10 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean --sourcemap"
+    "build": "tsup src/index.ts --format esm --dts --clean --sourcemap --external @asciidoctor/core"
+  },
+  "dependencies": {
+    "@asciidoctor/core": "^4.0.5"
   },
   "publishConfig": {
     "access": "public"

@@ -1,5 +1,11 @@
-export const ADOCFORGE_CORE_VERSION = '0.0.0' as const
-
-export interface AsciiDocDocument {
-  source: string
-}
+export { createAsciiDocProcessor } from './processor.js'
+export type {
+  AsciiDocProcessor,
+  ConversionResult,
+  ConvertOptions,
+  Diagnostic,
+  DiagnosticSeverity,
+  HtmlSanitizer,
+  OutlineItem,
+  ProcessorOptions,
+} from './types.js'

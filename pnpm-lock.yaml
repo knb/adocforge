@@ -150,7 +150,11 @@ importers:
 
   packages/ai: {}
 
-  packages/core: {}
+  packages/core:
+    dependencies:
+      '@asciidoctor/core':
+        specifier: ^4.0.5
+        version: 4.0.5
 
   packages/editor:
     dependencies:
