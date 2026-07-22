@@ -2,7 +2,7 @@
 
 AI-assisted, framework-independent AsciiDoc editor packages built with Asciidoctor.js and CodeMirror 6.
 
-This repository is being migrated from editor components extracted from KBMemo to the `@adocforge/core`, `@adocforge/ai`, and `@adocforge/editor` package architecture. The existing packages remain operational during that migration.
+The current architecture is implemented in `@adocforge/core`, `@adocforge/ai`, and `@adocforge/editor`. Earlier KBMemo-derived packages remain under `legacy/` as migration inputs and are not the target public API.
 
 See [ADOCFORGE_BOOTSTRAP.md](ADOCFORGE_BOOTSTRAP.md) for the product scope, architecture, implementation phases, and release requirements.
 
@@ -11,19 +11,31 @@ Project documentation:
 - [Architecture](docs/architecture.adoc)
 - [Roadmap](docs/roadmap.adoc)
 - [Development guide](docs/development.adoc)
+- [API reference and examples](docs/api.adoc)
 - [Architecture decisions](docs/decisions/)
 - [Contributing](CONTRIBUTING.adoc)
 - [Security policy](SECURITY.md)
 
 ## Target Packages
 
-AdocForge will expose three public packages:
+AdocForge exposes three package entry points:
 
 | Package             | Role                                                                  |
 | ------------------- | --------------------------------------------------------------------- |
 | `@adocforge/core`   | AsciiDoc processing, outline, diagnostics, and persistence interfaces |
 | `@adocforge/ai`     | Vendor-independent AI request and response contracts                  |
 | `@adocforge/editor` | CodeMirror-based `<adoc-forge-editor>` Web Component                  |
+
+## Capabilities
+
+- Secure Asciidoctor.js conversion with outlines and diagnostics
+- CodeMirror 6 source editing with sanitized live preview
+- IndexedDB restore and autosave
+- `.adoc` import and export
+- Provider-independent AI rewrite, summarize, and continue proposals
+- Streaming, cancellation, and explicit Accept or Reject
+
+See the [API reference](docs/api.adoc) and the runnable `apps/playground` example for integration details.
 
 ## Legacy Packages
 
@@ -62,10 +74,10 @@ pnpm --filter @adocforge/playground dev
 
 ## Install
 
-The packages are not yet published to npm. After the first release:
+The packages are not yet published to npm. Publishing requires explicit release approval. After the first release:
 
 ```bash
-npm install @adocforge/editor
+npm install @adocforge/core @adocforge/ai @adocforge/editor
 ```
 
 ## License

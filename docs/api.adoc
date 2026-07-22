@@ -1,0 +1,228 @@
+= AdocForge API Reference
+:toc:
+:sectnums:
+
+== Package Overview
+
+`@adocforge/core`:: Secure AsciiDoc conversion and persistence contracts.
+
+`@adocforge/ai`:: Vendor-independent AI operation and streaming contracts.
+
+`@adocforge/editor`:: The `<adoc-forge-editor>` Web Component and IndexedDB adapter.
+
+AsciiDoc source is canonical. HTML, outlines, diagnostics, and AI replacements are derived values or proposals.
+
+== `@adocforge/core`
+
+=== Conversion
+
+`createAsciiDocProcessor(options?)` returns an `AsciiDocProcessor`. Its asynchronous `convert(source, options?)` method returns `html`, `outline`, `diagnostics`, and an optional `title`.
+
+[source,typescript]
+----
+import { createAsciiDocProcessor } from '@adocforge/core'
+
+const processor = createAsciiDocProcessor({
+  sanitizeHtml: (html) => sanitizer.sanitize(html),
+})
+const result = await processor.convert('= Document\n\n== Section', {
+  showTitle: true,
+  standalone: false,
+})
+----
+
+The default processor always uses Asciidoctor secure mode. It does not read local or remote includes. Raw conversion output is not safe for every HTML sink; consumers that render it must provide sanitization. `@adocforge/editor` applies its own DOMPurify boundary.
+
+=== Conversion Types
+
+`AsciiDocProcessor`:: The asynchronous conversion interface.
+
+`ProcessorOptions`:: Accepts an optional synchronous or asynchronous `sanitizeHtml` callback.
+
+`ConvertOptions`:: Controls `standalone` and `showTitle` output.
+
+`ConversionResult`:: Contains HTML, a nested `OutlineItem` array, `Diagnostic` records, and an optional title.
+
+`DiagnosticSeverity`:: `info`, `warning`, or `error`.
+
+=== Persistence Types
+
+`AdocDocument` is the canonical persistence record. It contains `id`, `title`, `source`, attributes, revision, and ISO 8601 timestamps.
+
+`StorageAdapter` implementations provide `load`, `save`, `delete`, and `list`. A successful save returns the stored revision and update timestamp. Storage implementations own concurrency and revision policy.
+
+== `@adocforge/ai`
+
+=== Operations
+
+`AIOperation` is `rewrite`, `summarize`, or `continue`. An `AIRequest` contains the operation, explicit input, and an optional instruction. An `AIResponse` contains a proposed replacement.
+
+[source,typescript]
+----
+import { runAIOperation, streamAIOperation } from '@adocforge/ai'
+
+const response = await runAIOperation(provider, {
+  operation: 'rewrite',
+  input: selectedSource,
+  instruction: 'Use shorter sentences.',
+})
+
+for await (const { delta } of streamAIOperation(provider, {
+  operation: 'summarize',
+  input: selectedSource,
+})) {
+  renderPartialProposal(delta)
+}
+----
+
+`AIProvider.complete()` is required. `AIProvider.stream()` is optional; `streamAIOperation()` falls back to one completion chunk when it is absent. Both runners accept an `AbortSignal`.
+
+=== Errors
+
+`AdocForgeAIError.code` is one of:
+
+`invalid_request`:: The operation, input, or instruction is invalid.
+
+`invalid_response`:: The provider returned malformed or empty output.
+
+`aborted`:: The operation was cancelled.
+
+`provider_error`:: The provider failed. The original error is available as `cause`.
+
+This package does not store credentials, choose a provider, or decide what content may leave the host application.
+
+== `@adocforge/editor`
+
+=== Registration
+
+Importing the package has no global side effect. Register the element explicitly.
+
+[source,typescript]
+----
+import { registerAdocForgeEditor } from '@adocforge/editor'
+
+registerAdocForgeEditor()
+----
+
+Registration is idempotent. `ADOC_FORGE_EDITOR_TAG` contains the `adoc-forge-editor` tag name.
+
+=== Properties
+
+`value: string`:: Canonical AsciiDoc source.
+
+`readonly: boolean`:: Disables user editing and mutating toolbar actions.
+
+`label: string`:: Visible and accessible editor name.
+
+`processor: AsciiDocProcessor`:: Preview processor. Defaults to `@adocforge/core`.
+
+`previewDelay: number`:: Preview debounce in milliseconds. Defaults to 300.
+
+`storage?: StorageAdapter`:: Host-provided storage implementation.
+
+`documentId: string`:: Storage key. Restore and autosave require both storage and an ID.
+
+`autosaveDelay: number`:: Autosave debounce in milliseconds. Defaults to 1000.
+
+`aiProvider?: AIProvider`:: Host-provided AI adapter. AI controls are hidden when absent.
+
+=== Methods
+
+`focus()`:: Focuses the CodeMirror source editor.
+
+`importDocument(file)`:: Imports a text file as a user edit. The limit is 10 MiB; NUL-containing input is rejected.
+
+`createExportBlob()`:: Returns the current source as a `text/asciidoc;charset=utf-8` Blob.
+
+`downloadDocument(filename?)`:: Downloads the current source and adds `.adoc` when needed.
+
+`requestAI(operation, instruction?)`:: Generates a proposal from the explicit editor selection.
+
+`cancelAI()`:: Cancels active generation.
+
+`acceptAIProposal()`:: Replaces the captured selection when its source snapshot is still current.
+
+`rejectAIProposal()`:: Discards the proposal without changing source.
+
+The internal CodeMirror `EditorView` is intentionally private.
+
+=== Events
+
+All events bubble and cross the Shadow DOM boundary.
+
+[cols="1,2"]
+|===
+|Event |Detail
+
+|`adocforge-change`
+|`{ value }` after a user edit or accepted import/AI proposal. External `value` assignment does not emit it.
+
+|`adocforge-load`, `adocforge-save`
+|`{ documentId, revision, updatedAt }`
+
+|`adocforge-load-error`, `adocforge-save-error`
+|`{ documentId, error }`
+
+|`adocforge-import`
+|`{ name, size, value }`
+
+|`adocforge-import-error`
+|`{ error }`
+
+|`adocforge-ai-start`, `adocforge-ai-cancel`
+|`{ operation, input, instruction? }`
+
+|`adocforge-ai-proposal`, `adocforge-ai-reject`
+|`{ operation, input, instruction?, replacement }`
+
+|`adocforge-ai-accept`
+|Proposal detail plus the resulting `value`.
+
+|`adocforge-ai-error`
+|`{ operation, error }`
+|===
+
+=== IndexedDB Adapter
+
+[source,typescript]
+----
+import { createIndexedDbStorage } from '@adocforge/editor/storage/indexeddb'
+
+const storage = createIndexedDbStorage({
+  databaseName: 'my-documents',
+  storeName: 'documents',
+})
+editor.storage = storage
+editor.documentId = 'getting-started'
+----
+
+`createIndexedDbStorage()` returns an adapter with an additional `close()` method. Options can inject an `IDBFactory` and clock for non-browser hosts and tests.
+
+== Complete Browser Example
+
+[source,html]
+----
+<adoc-forge-editor label="Document source"></adoc-forge-editor>
+<script type="module" src="/src/main.ts"></script>
+----
+
+[source,typescript]
+----
+import { registerAdocForgeEditor } from '@adocforge/editor'
+import { createIndexedDbStorage } from '@adocforge/editor/storage/indexeddb'
+import type { AdocForgeEditor } from '@adocforge/editor'
+
+registerAdocForgeEditor()
+
+const editor = document.querySelector<AdocForgeEditor>('adoc-forge-editor')
+if (!editor) throw new Error('Editor element is missing')
+
+editor.storage = createIndexedDbStorage()
+editor.documentId = 'example'
+editor.value = '= Example\n\nStart writing here.'
+editor.addEventListener('adocforge-save-error', ({ detail }) => {
+  console.error('Autosave failed', detail.error)
+})
+----
+
+The repository's `apps/playground` application demonstrates persistence, import/export, preview, and a credential-free AI proposal adapter through public package APIs.

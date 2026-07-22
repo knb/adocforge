@@ -24,7 +24,9 @@ pnpm test
 pnpm build
 ----
 
-Run `pnpm test:e2e` for user interface behavior once an E2E scenario exists.
+Run `pnpm test:e2e` for browser-level editor workflows.
+
+Run `pnpm pack:packages`, `pnpm verify:consumer`, and `pnpm verify:publish` before a release candidate. These commands must inspect the current `@adocforge/*` packages before Phase 5 is complete.
 
 == Playground
 
@@ -34,6 +36,8 @@ pnpm --filter @adocforge/playground dev
 ----
 
 The playground must consume public package APIs. It must not import files from another package's `src` directory.
+
+See `docs/api.adoc` for the supported integration surface. Public API changes must update that reference and the owning package README in the same commit.
 
 == Architecture Changes
 
