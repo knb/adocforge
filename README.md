@@ -36,19 +36,19 @@ The extracted KBMemo packages remain under `legacy/packages` as tested migration
 ## Development
 
 ```bash
-npm install
-npm test
-npm run build
-npm run pack:packages
-npm run verify:consumer
+corepack enable
+pnpm install
+pnpm lint
+pnpm typecheck
+pnpm test
 ```
 
-The CI workflow runs the same build, test, tarball, isolated-consumer, and demo checks on Node.js 20.
+The CI workflow runs formatting, lint, type, build, test, tarball, isolated-consumer, and playground checks on Node.js 20.
 
-Run the standalone demo:
+Run the AdocForge playground:
 
 ```bash
-npm run dev --workspace adoc-editor-demo
+pnpm --filter @adocforge/playground dev
 ```
 
 ## Install
@@ -56,15 +56,7 @@ npm run dev --workspace adoc-editor-demo
 The packages are not yet published to npm. After the first release:
 
 ```bash
-npm install @kbmemo/adoc-editor @asciidoctor/core codemirror highlight.js
-```
-
-CSS is exported separately so consumers can choose the required layers:
-
-```js
-import '@kbmemo/adoc-wysiwyg/wysiwyg.css'
-import '@kbmemo/adoc-wysiwyg/contextMenu.css'
-import '@kbmemo/adoc-preview/preview_hljs.css'
+npm install @adocforge/editor
 ```
 
 ## License

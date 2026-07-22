@@ -1,0 +1,22 @@
+{
+  "name": "@adocforge/core",
+  "version": "0.0.0",
+  "description": "Framework-independent AsciiDoc processing contracts for AdocForge",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --sourcemap"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

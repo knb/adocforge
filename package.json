@@ -7,7 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "pnpm run build:packages",
+    "build": "pnpm run build:current && pnpm run build:playground && pnpm run build:legacy",
     "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -22,7 +22,10 @@
     "verify:publish": "node scripts/verify-publish-readiness.mjs",
     "publish:packages": "node scripts/publish-packages.mjs",
     "pretest": "pnpm run build",
-    "build:packages": "pnpm --filter './legacy/packages/*' run --if-present build",
+    "build:current": "pnpm --filter './packages/*' run build",
+    "build:playground": "pnpm --filter @adocforge/playground run build",
+    "build:legacy": "pnpm --filter './legacy/packages/*' run --if-present build",
+    "build:packages": "pnpm run build:current",
     "build:demo": "pnpm --filter adoc-editor-demo run build"
   },
   "dependencies": {

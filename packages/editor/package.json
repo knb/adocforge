@@ -1,0 +1,27 @@
+{
+  "name": "@adocforge/editor",
+  "version": "0.0.0",
+  "description": "Framework-independent AdocForge editor Web Component",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --sourcemap --external lit"
+  },
+  "dependencies": {
+    "@adocforge/ai": "workspace:*",
+    "@adocforge/core": "workspace:*",
+    "lit": "^3.3.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

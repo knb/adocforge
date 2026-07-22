@@ -26,4 +26,5 @@ jobs:
       - run: pnpm pack:packages
       - run: pnpm verify:consumer
       - run: pnpm verify:publish
+      - run: pnpm build:playground
       - run: pnpm build:demo
