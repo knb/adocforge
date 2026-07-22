@@ -38,12 +38,20 @@ Dry and clear.`)
     expect(result.diagnostics).toEqual([])
   })
 
-  it('disables include directives in secure mode', async () => {
+  it('does not read local files through include directives', async () => {
     const processor = createAsciiDocProcessor()
-    const result = await processor.convert('include::private.adoc[]')
+    const result = await processor.convert('include::package.json[]')
 
-    expect(result.html).not.toContain('private document contents')
-    expect(result.html).toContain('href="private.adoc"')
+    expect(result.html).not.toContain('adocforge-monorepo')
+    expect(result.html).toContain('href="package.json"')
+  })
+
+  it('does not fetch remote include targets', async () => {
+    const processor = createAsciiDocProcessor()
+    const result = await processor.convert('include::https://example.invalid/private.adoc[]')
+
+    expect(result.html).toContain('href="https://example.invalid/private.adoc"')
+    expect(result.diagnostics).toEqual([])
   })
 
   it('returns structured parser diagnostics', async () => {
@@ -72,5 +80,14 @@ unclosed`)
 
     expect(sanitizeHtml).toHaveBeenCalledOnce()
     expect(result.html).toBe('<safe><div class="paragraph">\n<p>Text</p>\n</div></safe>')
+  })
+
+  it('can omit the document title without exposing converter attributes', async () => {
+    const processor = createAsciiDocProcessor()
+    const result = await processor.convert('= Hidden title\n\nBody', { showTitle: false })
+
+    expect(result.title).toBe('Hidden title')
+    expect(result.html).not.toContain('<h1>Hidden title</h1>')
+    expect(result.html).toContain('<p>Body</p>')
   })
 })

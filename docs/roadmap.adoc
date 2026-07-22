@@ -11,9 +11,9 @@
 
 == Phase 1: Core Conversion
 
-* Wrap Asciidoctor.js 4 behind `AsciiDocProcessor`.
-* Return HTML, outline, title, and structured diagnostics.
-* Enforce safe defaults and test disabled dangerous features.
+* [x] Wrap Asciidoctor.js 4 behind `AsciiDocProcessor`.
+* [x] Return HTML, outline, title, and structured diagnostics.
+* [x] Enforce safe defaults and test disabled dangerous features.
 
 == Phase 2: Editor and Preview
 

@@ -34,6 +34,7 @@ playground -> editor -> core
 * Conversion options are allowlisted and safe mode is the default.
 * Preview HTML crosses an explicit sanitization boundary before DOM insertion.
 * External content access and document includes require explicit opt-in.
+* Secure conversion and HTML sanitization are separate boundaries; preview rendering requires both.
 * AI receives only explicitly selected content and required context.
 * AI results remain proposals until the user accepts them.
 
