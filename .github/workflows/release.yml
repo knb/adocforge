@@ -1,7 +1,13 @@
-name: Release readiness
+name: Release AdocForge packages
 
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish verified packages to npm after environment approval
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -21,7 +27,31 @@ jobs:
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm build
+      - run: pnpm pack:packages
+      - run: pnpm verify:consumer
+      - run: pnpm verify:publish
       - run: pnpm changeset status
+      - run: pnpm publish:packages
 
-  # npm publishing and provenance are added in Phase 5 after explicit approval.
+  publish:
+    if: inputs.publish
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm publish:packages -- --publish
+        env:
+          ADOCFORGE_PUBLISH_APPROVED: 'yes'
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_PUBLISH_REGISTRY: https://registry.npmjs.org/

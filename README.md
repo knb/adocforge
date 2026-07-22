@@ -12,6 +12,7 @@ Project documentation:
 - [Roadmap](docs/roadmap.adoc)
 - [Development guide](docs/development.adoc)
 - [API reference and examples](docs/api.adoc)
+- [Release runbook](docs/releasing.adoc)
 - [Architecture decisions](docs/decisions/)
 - [Contributing](CONTRIBUTING.adoc)
 - [Security policy](SECURITY.md)

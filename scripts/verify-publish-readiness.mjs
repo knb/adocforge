@@ -1,65 +1,70 @@
 #!/usr/bin/env node
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { KBMEMO_PACKAGE_VERSION, KBMEMO_WORKSPACES } from './package-workspaces.mjs'
+
+import { ADOCFORGE_PACKAGE_DIRS, ADOCFORGE_WORKSPACES } from './package-workspaces.mjs'
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..')
-const packagesDir = join(rootDir, 'legacy', 'packages')
-
-/** @param {string} workspace */
-function packageDir(workspace) {
-  return join(packagesDir, workspace.replace('@kbmemo/', ''))
-}
-
-/** @param {string} workspace */
-function readPackageJson(workspace) {
-  const path = join(packageDir(workspace), 'package.json')
-  return { path, json: JSON.parse(readFileSync(path, 'utf8')) }
-}
-
+const repositoryUrl = 'git+https://github.com/knb/adocforge.git'
 let failed = false
 
-for (const workspace of KBMEMO_WORKSPACES) {
-  const { path, json } = readPackageJson(workspace)
+for (const workspace of ADOCFORGE_WORKSPACES) {
+  const directory = ADOCFORGE_PACKAGE_DIRS[workspace]
+  const path = join(rootDir, directory, 'package.json')
+  const json = JSON.parse(readFileSync(path, 'utf8'))
 
-  if (json.private) {
-    console.error(`${workspace}: "private": true must be removed before registry publish`)
-    failed = true
-  }
+  requireValue(json.name === workspace, workspace, `name must be ${workspace}`)
+  requireValue(
+    /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(json.version),
+    workspace,
+    'invalid version',
+  )
+  requireValue(!json.private, workspace, 'package must not be private')
+  requireValue(json.description?.trim(), workspace, 'missing description')
+  requireValue(json.license === 'MIT', workspace, 'license must be MIT')
+  requireValue(json.repository?.url === repositoryUrl, workspace, 'incorrect repository.url')
+  requireValue(
+    json.repository?.directory === directory,
+    workspace,
+    'incorrect repository.directory',
+  )
+  requireValue(json.publishConfig?.access === 'public', workspace, 'publish access must be public')
+  requireValue(json.files?.includes('dist'), workspace, 'files must include dist')
 
-  if (json.version !== KBMEMO_PACKAGE_VERSION) {
-    console.error(`${workspace}: version must be ${KBMEMO_PACKAGE_VERSION} (got ${json.version})`)
-    failed = true
-  }
-
-  if (!json.description?.trim()) {
-    console.error(`${workspace}: missing description`)
-    failed = true
-  }
-
-  if (!json.repository?.url) {
-    console.error(`${workspace}: missing repository.url`)
-    failed = true
+  for (const target of exportTargets(json.exports)) {
+    requireValue(
+      existsSync(join(rootDir, directory, target)),
+      workspace,
+      `missing export target ${target}`,
+    )
   }
 
   for (const [name, version] of Object.entries(json.dependencies ?? {})) {
-    if (!name.startsWith('@kbmemo/')) continue
-    if (version !== KBMEMO_PACKAGE_VERSION) {
-      console.error(
-        `${workspace}: dependency ${name} must be ${KBMEMO_PACKAGE_VERSION} (got ${version})`,
-      )
-      failed = true
-    }
+    if (!name.startsWith('@adocforge/')) continue
+    requireValue(
+      version === 'workspace:*',
+      workspace,
+      `${name} must use workspace:* (got ${version})`,
+    )
   }
 
-  console.log(`${workspace}: publish metadata ok (${path})`)
+  console.log(`${workspace}: publish metadata and exports ok (${json.version})`)
 }
 
-if (failed) {
-  process.exit(1)
-}
-
+if (failed) process.exit(1)
 console.log(
-  `All ${KBMEMO_WORKSPACES.length} packages are publish-ready at ${KBMEMO_PACKAGE_VERSION}.`,
+  `All ${ADOCFORGE_WORKSPACES.length} AdocForge packages passed publish readiness checks.`,
 )
+
+function exportTargets(exports) {
+  return Object.values(exports ?? {}).flatMap((entry) =>
+    typeof entry === 'string' ? [entry] : Object.values(entry),
+  )
+}
+
+function requireValue(value, workspace, message) {
+  if (value) return
+  console.error(`${workspace}: ${message}`)
+  failed = true
+}

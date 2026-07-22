@@ -1,0 +1,71 @@
+= AdocForge Release Runbook
+:toc:
+:sectnums:
+
+== Safety Model
+
+Package publication is never triggered by a push or pull request. The release workflow must be started manually. Its publish job additionally requires:
+
+* the `publish` workflow input set to true;
+* successful verification;
+* approval of the protected GitHub `npm` Environment;
+* an `NPM_TOKEN` Environment secret;
+* npm trusted publishing or token access for the `@adocforge` scope.
+
+Running `pnpm publish:packages` locally is always a dry-run. Actual publication also requires the `--publish` argument and `ADOCFORGE_PUBLISH_APPROVED=yes`.
+
+== Prepare Versions
+
+Add a Changeset with the packages and semantic version increments affected by the work:
+
+[source,shell]
+----
+pnpm changeset
+----
+
+Commit the generated file. When preparing a release PR, apply pending Changesets:
+
+[source,shell]
+----
+pnpm version:packages
+pnpm install
+----
+
+Review package versions, internal dependency ranges, and generated changelogs. Version `0.0.0` is a development placeholder and the publish script refuses to publish it.
+
+== Verify Locally
+
+[source,shell]
+----
+pnpm lint
+pnpm format:check
+pnpm typecheck
+pnpm test
+pnpm test:e2e
+pnpm pack:packages
+pnpm verify:consumer
+pnpm verify:publish
+pnpm changeset status
+pnpm publish:packages
+----
+
+The final command performs only a registry dry-run. Confirm that each tarball includes its README, JavaScript, type declarations, and declared export targets.
+
+== Verify in GitHub Actions
+
+Run the `Release AdocForge packages` workflow with `publish` left false. This repeats release checks and a dry-run without requiring npm credentials.
+
+== Publish
+
+After explicit release approval:
+
+. Confirm the release commit is on `main` and the worktree versions are not `0.0.0`.
+. Run `Release AdocForge packages` manually with `publish` set to true.
+. Review and approve the protected `npm` Environment deployment.
+. Verify all three packages on npm and install them in a clean project.
+
+Packages are published in dependency order: `@adocforge/core`, `@adocforge/ai`, then `@adocforge/editor`. Provenance is requested for each publish.
+
+== Recovery
+
+npm releases are immutable. Do not overwrite or reuse a published version. If publication stops partway through, inspect which packages exist, create a corrective Changeset with new versions, repeat verification, and run the workflow again. Deprecate a broken version instead of unpublishing it unless npm policy and incident severity clearly require removal.

@@ -17,7 +17,7 @@
     "test:a11y": "playwright test e2e/accessibility.spec.ts",
     "changeset": "changeset",
     "version:packages": "changeset version",
-    "pack:packages": "pnpm run build && node scripts/verify-package-tarballs.mjs",
+    "pack:packages": "pnpm run build:current && node scripts/verify-package-tarballs.mjs",
     "report:syntax-coverage": "node scripts/report-syntax-coverage.mjs",
     "verify:consumer": "node scripts/verify-consumer-install.mjs",
     "verify:publish": "node scripts/verify-publish-readiness.mjs",

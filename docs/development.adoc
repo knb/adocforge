@@ -30,6 +30,8 @@ Run `pnpm test:a11y` for the focused axe-core WCAG A/AA audit and keyboard workf
 
 Run `pnpm pack:packages`, `pnpm verify:consumer`, and `pnpm verify:publish` before a release candidate. These commands must inspect the current `@adocforge/*` packages before Phase 5 is complete.
 
+`pnpm publish:packages` performs a dry-run unless the explicit publish safeguards documented in `docs/releasing.adoc` are satisfied.
+
 == Playground
 
 [source,shell]
