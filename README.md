@@ -1,10 +1,12 @@
-# KBMemo AsciiDoc Editor
+# AdocForge
 
-Pure JavaScript AsciiDoc editor packages built with Asciidoctor.js and CodeMirror 6.
+AI-assisted, framework-independent AsciiDoc editor packages built with Asciidoctor.js and CodeMirror 6.
 
-This monorepo contains source editing, live preview, and block-based WYSIWYG components extracted from KBMemo. Host-specific behavior is provided through `HostConfig`, so consumers can use the editor without Rails or KBMemo.
+This repository is being migrated from editor components extracted from KBMemo to the `@adocforge/core`, `@adocforge/ai`, and `@adocforge/editor` package architecture. The existing packages remain operational during that migration.
 
-## Packages
+See [ADOCFORGE_BOOTSTRAP.md](ADOCFORGE_BOOTSTRAP.md) for the product scope, architecture, implementation phases, and release requirements.
+
+## Current Packages
 
 | Package | Role |
 | --- | --- |
