@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/knb/asciidoc-editor.git",
+    "url": "git+https://github.com/knb/adocforge.git",
     "directory": "packages/adoc-editor"
   },
   "files": [
@@ -39,9 +39,9 @@
     "highlight.js": "^11.11.1",
     "katex": "^0.16.11"
   },
-  "homepage": "https://github.com/knb/asciidoc-editor#readme",
+  "homepage": "https://github.com/knb/adocforge#readme",
   "bugs": {
-    "url": "https://github.com/knb/asciidoc-editor/issues"
+    "url": "https://github.com/knb/adocforge/issues"
   },
   "license": "MIT",
   "engines": {

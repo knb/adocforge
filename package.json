@@ -1,5 +1,5 @@
 {
-  "name": "kbmemo-asciidoc-editor-monorepo",
+  "name": "adocforge-monorepo",
   "private": true,
   "type": "module",
   "workspaces": [
