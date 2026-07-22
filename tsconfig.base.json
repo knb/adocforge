@@ -7,7 +7,8 @@
     "paths": {
       "@adocforge/core": ["packages/core/src/index.ts"],
       "@adocforge/ai": ["packages/ai/src/index.ts"],
-      "@adocforge/editor": ["packages/editor/src/index.ts"]
+      "@adocforge/editor": ["packages/editor/src/index.ts"],
+      "@adocforge/editor/*": ["packages/editor/src/*"]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "strict": true,
