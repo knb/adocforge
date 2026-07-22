@@ -1,0 +1,19 @@
+= ADR 0002: CodeMirror 6 as the Editing Engine
+:status: accepted
+:date: 2026-07-22
+
+== Context
+
+AdocForge requires source editing, syntax-aware commands, diagnostics, selection-based AI operations, and integration into multiple host frameworks.
+
+== Decision
+
+Use CodeMirror 6 inside `@adocforge/editor`. AsciiDoc source remains canonical. CodeMirror state and `EditorView` are private implementation details; public methods, properties, and events expose editor behavior instead.
+
+== Consequences
+
+The editor can use CodeMirror's extension model without coupling consumers to its types. Replacing or upgrading the editing engine remains possible behind the Web Component API. Advanced engine access is excluded from the stable API.
+
+== Alternatives
+
+A plain textarea is insufficient for the target editing behavior. A rich-text document model would create a second canonical representation and unreliable HTML-to-AsciiDoc reconstruction.

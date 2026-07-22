@@ -1,0 +1,19 @@
+= ADR 0003: Lit Web Component as the UI Boundary
+:status: accepted
+:date: 2026-07-22
+
+== Context
+
+AdocForge must embed in Rails and in applications using different frontend frameworks while maintaining one accessible editor implementation.
+
+== Decision
+
+Expose the completed editor as `<adoc-forge-editor>` implemented with Lit and Shadow DOM. Use standard properties and methods for configuration, CSS custom properties for theming, and composed custom events prefixed with `adocforge-` for host integration. Element registration is explicit and idempotent.
+
+== Consequences
+
+Consumers can use the editor without adopting a framework runtime. Shadow DOM limits style leakage while requiring deliberate accessibility and theme APIs. Framework wrappers may be added later without becoming the primary implementation.
+
+== Alternatives
+
+Framework-specific components would fragment behavior. An imperative DOM API would provide weaker lifecycle and composition semantics. Automatic registration on import would create avoidable global side effects and test collisions.

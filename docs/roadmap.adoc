@@ -1,0 +1,38 @@
+= AdocForge Roadmap
+:toc:
+
+== Phase 0: Repository Foundation
+
+* [x] pnpm workspace and strict TypeScript configuration
+* [x] ESLint, Prettier, Vitest, Playwright, Changesets, and CI configuration
+* [x] Three public package entry points and a buildable playground
+* [x] Architecture document and ADR 0001 through 0004
+* [ ] Community and security policy documents
+
+== Phase 1: Core Conversion
+
+* Wrap Asciidoctor.js 4 behind `AsciiDocProcessor`.
+* Return HTML, outline, title, and structured diagnostics.
+* Enforce safe defaults and test disabled dangerous features.
+
+== Phase 2: Editor and Preview
+
+* Integrate CodeMirror 6 without exposing `EditorView` publicly.
+* Add debounced preview and outline updates.
+* Define the stable Web Component properties, methods, and events.
+
+== Phase 3: Local Persistence
+
+* Implement the IndexedDB storage adapter.
+* Add autosave state, recovery, and `.adoc` import/export.
+
+== Phase 4: AI Assistance
+
+* Implement rewrite, summarize, and continue operations.
+* Support cancellation and optional streaming.
+* Require explicit Accept or Reject for generated changes.
+
+== Phase 5: Public Release
+
+* Complete API documentation, examples, accessibility checks, package inspection, and release automation.
+* Publish only after explicit approval.

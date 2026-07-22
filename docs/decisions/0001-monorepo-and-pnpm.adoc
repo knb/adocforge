@@ -1,0 +1,19 @@
+= ADR 0001: pnpm Monorepo and Three Public Packages
+:status: accepted
+:date: 2026-07-22
+
+== Context
+
+The extracted editor consists of five KBMemo-oriented packages. AdocForge needs framework-independent boundaries and coordinated releases without prematurely splitting every implementation detail into a package.
+
+== Decision
+
+Use a pnpm workspace with three public packages: `@adocforge/core`, `@adocforge/ai`, and `@adocforge/editor`. Keep runnable applications under `apps/` and preserve extracted code under `legacy/` during migration. Use ESM, strict TypeScript, Changesets, and a single lockfile.
+
+== Consequences
+
+Package ownership and dependency direction are explicit. Atomic repository changes remain straightforward. A future package split requires demonstrated independent responsibility and a new ADR. Legacy packages are not part of the target public API.
+
+== Alternatives
+
+Separate repositories would make coordinated API changes and testing harder. Publishing all five extracted packages would preserve KBMemo-specific boundaries and create unnecessary release overhead.

@@ -1,0 +1,19 @@
+= ADR 0004: Storage and AI as Host-Provided Adapters
+:status: accepted
+:date: 2026-07-22
+
+== Context
+
+Consumers need different persistence backends and AI providers. Both capabilities cross trust boundaries and may involve credentials or external transmission of user documents.
+
+== Decision
+
+Define storage contracts in `@adocforge/core` and vendor-independent AI contracts in `@adocforge/ai`. Inject implementations into the editor. Provide IndexedDB as the first storage adapter. Keep provider credentials and vendor SDKs outside public core packages. Require explicit configuration before external transmission, use `AbortSignal` for cancellation, send minimal context, and present AI output for acceptance before modifying source.
+
+== Consequences
+
+Hosts control data residency, authentication, and network policy. Local-only use remains possible. Adapter failures need structured errors and visible recovery states. Examples must use a server-side proxy when credentials are required.
+
+== Alternatives
+
+Bundling a preferred provider would simplify one setup but couple releases, expose credential risks, and violate local-first operation. Hard-coding IndexedDB would prevent server-backed and Git-based workflows.

@@ -1,0 +1,44 @@
+= AdocForge Development Guide
+
+== Requirements
+
+* Node.js 20 or later
+* Corepack
+
+== Setup
+
+[source,shell]
+----
+corepack enable
+pnpm install --frozen-lockfile
+----
+
+== Checks
+
+[source,shell]
+----
+pnpm lint
+pnpm format:check
+pnpm typecheck
+pnpm test
+pnpm build
+----
+
+Run `pnpm test:e2e` for user interface behavior once an E2E scenario exists.
+
+== Playground
+
+[source,shell]
+----
+pnpm --filter @adocforge/playground dev
+----
+
+The playground must consume public package APIs. It must not import files from another package's `src` directory.
+
+== Architecture Changes
+
+Read `ADOCFORGE_BOOTSTRAP.md`, `docs/architecture.adoc`, and relevant ADRs first. Add an ADR for decisions that change package responsibilities, public API direction, trust boundaries, persistence, or external service integration.
+
+== Legacy Migration
+
+Code under `legacy/` is retained as tested migration input. Move behavior into the new packages by responsibility and add tests at the new boundary. Do not make new public APIs depend on legacy package names.

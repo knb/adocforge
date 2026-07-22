@@ -1,0 +1,44 @@
+= AdocForge Architecture
+:toc:
+:sectnums:
+
+== System Goal
+
+AdocForge provides a framework-independent AsciiDoc editing surface while keeping document processing, AI integration, and user interface concerns replaceable. AsciiDoc source is canonical; rendered HTML, outlines, diagnostics, and search data are derived values.
+
+== Package Boundaries
+
+`@adocforge/core`:: Owns document types, conversion contracts, outlines, diagnostics, and storage contracts. It must not depend on DOM, Lit, CodeMirror, or an AI vendor.
+
+`@adocforge/ai`:: Owns vendor-independent AI operations, streaming results, cancellation, and structured errors. It never stores credentials and never decides what document content may be sent.
+
+`@adocforge/editor`:: Owns the Lit Web Component, CodeMirror integration, preview orchestration, commands, and user-visible state. It consumes `core` and `ai` through their public contracts.
+
+`apps/playground`:: Exercises public package APIs as a browser consumer. Provider-specific AI examples belong here, not in public packages.
+
+`legacy`:: Preserves tested KBMemo-derived code as migration input. New consumers must not depend on it.
+
+== Dependency Direction
+
+[source,text]
+----
+playground -> editor -> core
+                    -> ai
+----
+
+`core` and `ai` do not depend on `editor`. Host applications configure storage, external services, and AI providers at the edge.
+
+== Data and Trust Boundaries
+
+* AsciiDoc source is the only editable source of truth.
+* Conversion options are allowlisted and safe mode is the default.
+* Preview HTML crosses an explicit sanitization boundary before DOM insertion.
+* External content access and document includes require explicit opt-in.
+* AI receives only explicitly selected content and required context.
+* AI results remain proposals until the user accepts them.
+
+== Evolution
+
+Public APIs are kept in three packages until a responsibility has independent consumers and release cadence. Architectural changes require an ADR under `docs/decisions/`.
+
+See also link:roadmap.adoc[Roadmap] and link:development.adoc[Development Guide].

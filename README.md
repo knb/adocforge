@@ -6,6 +6,13 @@ This repository is being migrated from editor components extracted from KBMemo t
 
 See [ADOCFORGE_BOOTSTRAP.md](ADOCFORGE_BOOTSTRAP.md) for the product scope, architecture, implementation phases, and release requirements.
 
+Project documentation:
+
+- [Architecture](docs/architecture.adoc)
+- [Roadmap](docs/roadmap.adoc)
+- [Development guide](docs/development.adoc)
+- [Architecture decisions](docs/decisions/)
+
 ## Target Packages
 
 AdocForge will expose three public packages:

@@ -1,21 +1,37 @@
-# Agent guide
+# AdocForge Agent Instructions
 
-This repository is the public source of truth for the `@kbmemo/adoc-*` npm packages. KBMemo is a consumer; do not make package changes only in the Rails application.
+## Mission
 
-## Boundaries
+Build a secure, framework-independent, AI-assisted AsciiDoc editor distributed as npm packages and a Web Component.
 
-- Keep the packages framework-independent and browser-first.
-- `@asciidoctor/core` and CodeMirror packages remain peer dependencies and must not be bundled.
-- Put KBMemo-specific behavior behind `HostConfig` in `@kbmemo/adoc-kbmemo`.
-- AsciiDoc source is the editing source of truth. Do not reconstruct WYSIWYG source from rendered HTML.
-- Preserve Trusted Types and sanitization boundaries when rendering preview HTML.
+## Working Rules
 
-## Verification
+- Read `ADOCFORGE_BOOTSTRAP.md` and relevant ADRs before architectural changes.
+- Use pnpm only. Use TypeScript strict mode and ESM for new code.
+- Keep `packages/core` independent from DOM, Lit, and CodeMirror.
+- Keep `packages/ai` independent from vendor SDKs.
+- Do not expose CodeMirror internals as the public editor API.
+- Treat AsciiDoc source as canonical data.
+- Never send document content to external services unless explicitly configured.
+- Add or update tests for every behavior change.
+- Update public documentation when public APIs change.
+- Record non-trivial architectural decisions under `docs/decisions/`.
+- Do not publish packages or push to remotes unless explicitly requested.
+- Treat `legacy/` as migration input, not as the target public architecture.
 
-- `npm test`
-- `npm run build`
-- `npm run pack:packages`
-- `npm run verify:consumer`
-- `npm run verify:publish`
+## Required Checks
 
-Run all relevant checks before publishing. Test tarballs in an isolated consumer rather than relying only on workspace links.
+- `pnpm lint`
+- `pnpm format:check`
+- `pnpm typecheck`
+- `pnpm test`
+- `pnpm build`
+- `pnpm test:e2e` when UI behavior changes
+
+## Coding Style
+
+- Prefer small, composable modules.
+- Prefer explicit types over `any`.
+- Use `AbortSignal` for cancellable asynchronous operations.
+- Return structured errors at package boundaries.
+- Keep comments focused on why, not what.
