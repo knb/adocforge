@@ -4,10 +4,10 @@ import { execFileSync } from 'node:child_process'
 import { ADOCFORGE_WORKSPACES } from './package-workspaces.mjs'
 
 const REQUIRED_PATHS = {
-  '@adocforge/core': ['README.adoc', 'dist/index.d.ts', 'dist/index.js', 'package.json'],
-  '@adocforge/ai': ['README.adoc', 'dist/index.d.ts', 'dist/index.js', 'package.json'],
+  '@adocforge/core': ['README.md', 'dist/index.d.ts', 'dist/index.js', 'package.json'],
+  '@adocforge/ai': ['README.md', 'dist/index.d.ts', 'dist/index.js', 'package.json'],
   '@adocforge/editor': [
-    'README.adoc',
+    'README.md',
     'dist/index.d.ts',
     'dist/index.js',
     'dist/storage/indexeddb.d.ts',

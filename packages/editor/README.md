@@ -1,55 +1,45 @@
-= `@adocforge/editor`
+# `@adocforge/editor`
 
 Framework-independent AdocForge editor Web Component.
 
-== Registration
+## Installation
 
-[source,typescript]
-----
+```sh
+npm install @adocforge/editor
+```
+
+## Registration
+
+```typescript
 import { registerAdocForgeEditor } from '@adocforge/editor'
 
 registerAdocForgeEditor()
-----
+```
 
 Registration is explicit and idempotent. Importing the package does not modify the global custom element registry.
 
-== Public API
+## Public API
 
-`value: string`:: Canonical AsciiDoc source. External assignment updates CodeMirror without emitting a user change.
-
-`readonly: boolean`:: Disables editing while preserving selection and reading behavior.
-
-`label: string`:: Visible and accessible name for the source editor.
-
-`previewDelay: number`:: Preview debounce delay in milliseconds. Defaults to 300.
-
-`processor: AsciiDocProcessor`:: Replaceable conversion implementation. Defaults to `@adocforge/core`.
-
-`aiProvider: AIProvider`:: Optional host-provided AI adapter. AI controls are hidden until configured.
-
-`documentId: string`:: Storage key used for restore and autosave.
-
-`storage: StorageAdapter`:: Host-provided persistence implementation.
-
-`autosaveDelay: number`:: Autosave debounce delay in milliseconds. Defaults to 1000.
-
-`focus()`:: Moves focus to the source editor.
-
-`importDocument(file)`:: Imports a text `.adoc` or `.asciidoc` file as a user edit. Files larger than 10 MiB and files containing NUL bytes are rejected.
-
-`createExportBlob()`:: Returns the canonical source as a `text/asciidoc;charset=utf-8` Blob without causing a download.
-
-`downloadDocument(filename?)`:: Downloads the canonical source. The `.adoc` extension is appended when needed.
-
-`requestAI(operation, instruction?)`:: Generates a proposal from the explicit CodeMirror selection.
-
-`cancelAI()`:: Cancels the active generation.
-
-`acceptAIProposal()` / `rejectAIProposal()`:: Resolves the current proposal. Only acceptance changes the source.
+- `value: string`: Canonical AsciiDoc source. External assignment updates CodeMirror without emitting a user change.
+- `readonly: boolean`: Disables editing while preserving selection and reading behavior.
+- `label: string`: Visible and accessible name for the source editor.
+- `previewDelay: number`: Preview debounce delay in milliseconds. Defaults to 300.
+- `processor: AsciiDocProcessor`: Replaceable conversion implementation. Defaults to `@adocforge/core`.
+- `aiProvider: AIProvider`: Optional host-provided AI adapter. AI controls are hidden until configured.
+- `documentId: string`: Storage key used for restore and autosave.
+- `storage: StorageAdapter`: Host-provided persistence implementation.
+- `autosaveDelay: number`: Autosave debounce delay in milliseconds. Defaults to 1000.
+- `focus()`: Moves focus to the source editor.
+- `importDocument(file)`: Imports a text `.adoc` or `.asciidoc` file as a user edit. Files larger than 10 MiB and files containing NUL bytes are rejected.
+- `createExportBlob()`: Returns the canonical source as a `text/asciidoc;charset=utf-8` Blob without causing a download.
+- `downloadDocument(filename?)`: Downloads the canonical source. The `.adoc` extension is appended when needed.
+- `requestAI(operation, instruction?)`: Generates a proposal from the explicit CodeMirror selection.
+- `cancelAI()`: Cancels the active generation.
+- `acceptAIProposal()` / `rejectAIProposal()`: Resolves the current proposal. Only acceptance changes the source.
 
 The CodeMirror `EditorView` is private and is not part of the public API.
 
-== Events
+## Events
 
 `adocforge-change` bubbles across the Shadow DOM boundary after a user edit. Its detail is `{ value: string }`. Assigning `value` from the host does not emit this event.
 
@@ -59,28 +49,31 @@ AI operations emit `adocforge-ai-start`, then `adocforge-ai-proposal` or `adocfo
 
 `adocforge-load` and `adocforge-save` report `{ documentId, revision, updatedAt }` after persistence completes. `adocforge-load-error` and `adocforge-save-error` report `{ documentId, error }`.
 
-== Preview Security
+## Preview Security
 
 Converted HTML is sanitized with DOMPurify before rendering. A custom processor does not bypass this editor-side boundary.
 
-== IndexedDB Storage
+## IndexedDB Storage
 
-[source,typescript]
-----
+```typescript
 import { createIndexedDbStorage } from '@adocforge/editor/storage/indexeddb'
 
 const storage = createIndexedDbStorage({ databaseName: 'my-documents' })
 const editor = document.querySelector('adoc-forge-editor')
 editor.storage = storage
 editor.documentId = 'getting-started'
-----
+```
 
 The editor restores the document when `storage` and `documentId` are configured, then debounces user edits into serialized saves. The adapter stores canonical `AdocDocument` records, increments revisions monotonically, and closes its connection when `close()` is called. Stored values are validated when read so corrupted or incompatible records fail explicitly.
 
-== File Import and Export
+## File Import and Export
 
 The built-in Import and Export commands use the same public methods described above. Imported content follows the normal `adocforge-change` and autosave path. Hosts that provide their own file UI can call `importDocument()` and `createExportBlob()` directly.
 
-== AI Proposals
+## AI Proposals
 
 The host controls the provider and transmission policy. AdocForge sends only the selected source and an optional instruction. Streaming output is displayed separately and never changes the canonical source until Accept is selected. A proposal becomes stale and cannot be accepted if the source changes after the request.
+
+## License
+
+MIT

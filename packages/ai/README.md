@@ -1,13 +1,18 @@
-= `@adocforge/ai`
+# `@adocforge/ai`
 
 Vendor-independent AI operation contracts for AdocForge.
 
-== Operations
+## Installation
+
+```sh
+npm install @adocforge/ai
+```
+
+## Operations
 
 The package defines `rewrite`, `summarize`, and `continue` operations. Only the explicit `input` and optional `instruction` are sent to the host-provided adapter.
 
-[source,typescript]
-----
+```typescript
 import { runAIOperation } from '@adocforge/ai'
 
 const proposal = await runAIOperation(
@@ -19,11 +24,11 @@ const proposal = await runAIOperation(
   },
   abortController.signal,
 )
-----
+```
 
 The returned `replacement` is a proposal. Applying it to a document is the editor or host application's responsibility.
 
-== Provider Contract
+## Provider Contract
 
 Providers implement `complete(request, signal?)` and may implement `stream(request, signal?)`. Provider-specific clients, credentials, and transmission policy remain outside this package.
 
@@ -31,9 +36,13 @@ Providers implement `complete(request, signal?)` and may implement `stream(reque
 
 Both operation runners validate requests and responses. Failures are reported as `AdocForgeAIError` with one of these codes:
 
-* `invalid_request`
-* `invalid_response`
-* `aborted`
-* `provider_error`
+- `invalid_request`
+- `invalid_response`
+- `aborted`
+- `provider_error`
 
 The original provider failure is retained as the error `cause`.
+
+## License
+
+MIT
