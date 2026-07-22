@@ -25,4 +25,15 @@ test('edits AsciiDoc and updates the sanitized preview', async ({ page }) => {
   await expect(editor.locator('.preview-content')).toContainText('Updated document')
   await expect(editor.locator('.preview-content')).toContainText('Browser input.')
   await expect(editor.locator('.outline-list')).toContainText('Current section')
+  await expect(editor.locator('.save-status')).toHaveText('Saved')
+
+  await page.reload()
+
+  const restoredEditor = page.locator('adoc-forge-editor')
+  await expect
+    .poll(() =>
+      restoredEditor.evaluate((element) => (element as HTMLElement & { value: string }).value),
+    )
+    .toBe(nextValue)
+  await expect(restoredEditor.locator('.save-status')).toHaveText('Saved')
 })

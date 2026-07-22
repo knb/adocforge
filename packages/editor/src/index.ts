@@ -3,4 +3,8 @@ export {
   AdocForgeEditor,
   registerAdocForgeEditor,
 } from './adoc-forge-editor.js'
-export type { AdocForgeChangeDetail } from './events.js'
+export type {
+  AdocForgeChangeDetail,
+  AdocForgePersistenceDetail,
+  AdocForgePersistenceErrorDetail,
+} from './events.js'

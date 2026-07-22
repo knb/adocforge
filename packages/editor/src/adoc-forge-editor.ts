@@ -2,22 +2,31 @@ import { basicSetup } from 'codemirror'
 import { Compartment, EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { createAsciiDocProcessor } from '@adocforge/core'
-import type { AsciiDocProcessor, OutlineItem } from '@adocforge/core'
+import type { AdocDocument, AsciiDocProcessor, OutlineItem, StorageAdapter } from '@adocforge/core'
 import DOMPurify from 'dompurify'
 import { LitElement, css, html } from 'lit'
 import type { PropertyValues } from 'lit'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
 
-import type { AdocForgeChangeDetail } from './events.js'
+import type {
+  AdocForgeChangeDetail,
+  AdocForgePersistenceDetail,
+  AdocForgePersistenceErrorDetail,
+} from './events.js'
+
+type SaveStatus = 'idle' | 'loading' | 'unsaved' | 'saving' | 'saved' | 'error'
 
 export const ADOC_FORGE_EDITOR_TAG = 'adoc-forge-editor' as const
 
 export class AdocForgeEditor extends LitElement {
   static properties = {
+    autosaveDelay: { type: Number, attribute: 'autosave-delay' },
+    documentId: { type: String, attribute: 'document-id' },
     label: { type: String },
     previewDelay: { type: Number, attribute: 'preview-delay' },
     processor: { attribute: false },
     readonly: { type: Boolean, reflect: true },
+    storage: { attribute: false },
     value: { type: String },
   }
 
@@ -34,6 +43,23 @@ export class AdocForgeEditor extends LitElement {
       margin-block-end: 0.5rem;
       font-size: 0.875rem;
       font-weight: 600;
+    }
+
+    .editor-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .save-status {
+      color: var(--adocforge-muted-color, #5f6368);
+      font-size: 0.8125rem;
+      white-space: nowrap;
+    }
+
+    .save-status[data-status='error'] {
+      color: var(--adocforge-error-color, #b3261e);
     }
 
     .workspace {
@@ -109,27 +135,43 @@ export class AdocForgeEditor extends LitElement {
     }
   `
 
+  declare autosaveDelay: number
+  declare documentId: string
   declare label: string
   declare previewDelay: number
   declare processor: AsciiDocProcessor
   declare readonly: boolean
+  declare storage: StorageAdapter | undefined
   declare value: string
 
   readonly #readonlyCompartment = new Compartment()
+  #documentCreatedAt = ''
+  #documentRevision = 0
+  #documentTitle = ''
+  #documentUpdatedAt = ''
+  #editVersion = 0
   #editorView: EditorView | undefined
   #outline: OutlineItem[] = []
   #previewError = ''
   #previewGeneration = 0
   #previewHtml = ''
   #previewTimer: ReturnType<typeof setTimeout> | undefined
+  #restoreGeneration = 0
+  #saveInFlight: Promise<void> | undefined
+  #savePending = false
+  #saveStatus: SaveStatus = 'idle'
+  #saveTimer: ReturnType<typeof setTimeout> | undefined
   #syncingExternalValue = false
 
   constructor() {
     super()
+    this.autosaveDelay = 1000
+    this.documentId = ''
     this.label = 'AsciiDoc source'
     this.previewDelay = 300
     this.processor = createAsciiDocProcessor()
     this.readonly = false
+    this.storage = undefined
     this.value = ''
   }
 
@@ -137,7 +179,19 @@ export class AdocForgeEditor extends LitElement {
     return html`
       <div class="workspace">
         <div>
-          <span class="editor-label" id="editor-label">${this.label}</span>
+          <div class="editor-heading">
+            <span class="editor-label" id="editor-label">${this.label}</span>
+            ${
+              this.storage && this.documentId
+                ? html`<span
+                    class="save-status"
+                    data-status=${this.#saveStatus}
+                    role=${this.#saveStatus === 'error' ? 'alert' : null}
+                    >${this.#saveStatusText()}</span
+                  >`
+                : null
+            }
+          </div>
           <div class="editor-surface"></div>
         </div>
         <aside class="reference-pane" aria-label="Document reference">
@@ -175,6 +229,9 @@ export class AdocForgeEditor extends LitElement {
 
             const value = update.state.doc.toString()
             this.value = value
+            this.#editVersion++
+            this.#saveStatus = 'unsaved'
+            this.#scheduleSave()
             this.dispatchEvent(
               new CustomEvent<AdocForgeChangeDetail>('adocforge-change', {
                 bubbles: true,
@@ -213,11 +270,16 @@ export class AdocForgeEditor extends LitElement {
 
     if (changed.has('value')) this.#schedulePreview()
     if (changed.has('processor') || changed.has('previewDelay')) this.#schedulePreview()
+    if (changed.has('storage') || changed.has('documentId')) {
+      queueMicrotask(() => void this.#restoreDocument())
+    }
   }
 
   disconnectedCallback(): void {
     if (this.#previewTimer !== undefined) clearTimeout(this.#previewTimer)
+    if (this.#saveTimer !== undefined) clearTimeout(this.#saveTimer)
     this.#previewGeneration++
+    this.#restoreGeneration++
     this.#editorView?.destroy()
     this.#editorView = undefined
     super.disconnectedCallback()
@@ -271,6 +333,7 @@ export class AdocForgeEditor extends LitElement {
 
       this.#previewHtml = DOMPurify.sanitize(result.html, { USE_PROFILES: { html: true } })
       this.#outline = result.outline
+      this.#documentTitle = result.title ?? this.#titleFromSource(source)
       this.#previewError = ''
     } catch (error: unknown) {
       if (generation !== this.#previewGeneration || !this.isConnected) return
@@ -280,6 +343,165 @@ export class AdocForgeEditor extends LitElement {
       this.#previewError = error instanceof Error ? error.message : 'Preview conversion failed'
     }
     this.requestUpdate()
+  }
+
+  #scheduleSave(delay = this.autosaveDelay): void {
+    if (!this.isConnected || !this.storage || !this.documentId) return
+    if (this.#saveTimer !== undefined) clearTimeout(this.#saveTimer)
+
+    this.#saveTimer = setTimeout(
+      () => {
+        this.#saveTimer = undefined
+        void this.#flushSave()
+      },
+      Math.max(0, delay),
+    )
+    this.requestUpdate()
+  }
+
+  async #flushSave(): Promise<void> {
+    if (!this.storage || !this.documentId) return
+    if (this.#saveInFlight) {
+      this.#savePending = true
+      return
+    }
+
+    const version = this.#editVersion
+    const source = this.value
+    this.#saveStatus = 'saving'
+    this.requestUpdate()
+    const saving = this.#saveDocument(source, version)
+    this.#saveInFlight = saving
+    try {
+      await saving
+    } finally {
+      this.#saveInFlight = undefined
+      if (this.#savePending || this.#editVersion !== version) {
+        this.#savePending = false
+        this.#scheduleSave(0)
+      }
+    }
+  }
+
+  async #saveDocument(source: string, version: number): Promise<void> {
+    const storage = this.storage
+    const documentId = this.documentId
+    if (!storage || !documentId) return
+
+    const now = new Date().toISOString()
+    const document: AdocDocument = {
+      id: documentId,
+      title: this.#documentTitle || this.#titleFromSource(source),
+      source,
+      attributes: {},
+      revision: this.#documentRevision,
+      createdAt: this.#documentCreatedAt || now,
+      updatedAt: this.#documentUpdatedAt || now,
+    }
+
+    try {
+      const result = await storage.save(document)
+      this.#documentRevision = result.revision
+      this.#documentCreatedAt = document.createdAt
+      this.#documentUpdatedAt = result.updatedAt
+      if (this.#editVersion === version) this.#saveStatus = 'saved'
+      this.#dispatchPersistenceEvent('adocforge-save', result)
+    } catch (error: unknown) {
+      this.#saveStatus = 'error'
+      this.#dispatchPersistenceError('adocforge-save-error', error)
+    }
+    this.requestUpdate()
+  }
+
+  async #restoreDocument(): Promise<void> {
+    const generation = ++this.#restoreGeneration
+    const storage = this.storage
+    const documentId = this.documentId
+    if (!this.isConnected || !storage || !documentId) {
+      this.#saveStatus = 'idle'
+      return
+    }
+
+    this.#saveStatus = 'loading'
+    this.#documentCreatedAt = ''
+    this.#documentRevision = 0
+    this.#documentTitle = ''
+    this.#documentUpdatedAt = ''
+    this.requestUpdate()
+    try {
+      const document = await storage.load(documentId)
+      if (generation !== this.#restoreGeneration || !this.isConnected) return
+      if (document) {
+        this.#documentCreatedAt = document.createdAt
+        this.#documentRevision = document.revision
+        this.#documentTitle = document.title
+        this.#documentUpdatedAt = document.updatedAt
+        this.value = document.source
+        this.#saveStatus = 'saved'
+        this.#dispatchPersistenceEvent('adocforge-load', {
+          revision: document.revision,
+          updatedAt: document.updatedAt,
+        })
+      } else {
+        this.#saveStatus = 'unsaved'
+      }
+    } catch (error: unknown) {
+      if (generation !== this.#restoreGeneration || !this.isConnected) return
+      this.#saveStatus = 'error'
+      this.#dispatchPersistenceError('adocforge-load-error', error)
+    }
+    this.requestUpdate()
+  }
+
+  #dispatchPersistenceEvent(
+    type: 'adocforge-load' | 'adocforge-save',
+    result: { revision: number; updatedAt: string },
+  ): void {
+    this.dispatchEvent(
+      new CustomEvent<AdocForgePersistenceDetail>(type, {
+        bubbles: true,
+        composed: true,
+        detail: {
+          documentId: this.documentId,
+          revision: result.revision,
+          updatedAt: result.updatedAt,
+        },
+      }),
+    )
+  }
+
+  #dispatchPersistenceError(
+    type: 'adocforge-load-error' | 'adocforge-save-error',
+    error: unknown,
+  ): void {
+    this.dispatchEvent(
+      new CustomEvent<AdocForgePersistenceErrorDetail>(type, {
+        bubbles: true,
+        composed: true,
+        detail: { documentId: this.documentId, error },
+      }),
+    )
+  }
+
+  #saveStatusText(): string {
+    switch (this.#saveStatus) {
+      case 'loading':
+        return 'Loading'
+      case 'unsaved':
+        return 'Unsaved'
+      case 'saving':
+        return 'Saving'
+      case 'saved':
+        return 'Saved'
+      case 'error':
+        return 'Storage failed'
+      default:
+        return ''
+    }
+  }
+
+  #titleFromSource(source: string): string {
+    return source.match(/^=\s+(.+)$/m)?.[1]?.trim() ?? 'Untitled document'
   }
 }
 
