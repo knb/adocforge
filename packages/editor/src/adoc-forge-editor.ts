@@ -7,14 +7,20 @@ import DOMPurify from 'dompurify'
 import { LitElement, css, html } from 'lit'
 import type { PropertyValues } from 'lit'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
+import { createElement, Download, Import as ImportIcon } from 'lucide'
 
 import type {
   AdocForgeChangeDetail,
+  AdocForgeImportDetail,
+  AdocForgeImportErrorDetail,
   AdocForgePersistenceDetail,
   AdocForgePersistenceErrorDetail,
 } from './events.js'
 
 type SaveStatus = 'idle' | 'loading' | 'unsaved' | 'saving' | 'saved' | 'error'
+
+const MAX_IMPORT_BYTES = 10 * 1024 * 1024
+const ASCIIDOC_MIME_TYPE = 'text/asciidoc;charset=utf-8'
 
 export const ADOC_FORGE_EDITOR_TAG = 'adoc-forge-editor' as const
 
@@ -50,6 +56,67 @@ export class AdocForgeEditor extends LitElement {
       align-items: baseline;
       justify-content: space-between;
       gap: 1rem;
+    }
+
+    .editor-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      margin-block-end: 0.5rem;
+    }
+
+    .editor-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      min-block-size: 2.25rem;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid var(--adocforge-border-color, #747775);
+      border-radius: 4px;
+      color: inherit;
+      background: transparent;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .editor-action:hover {
+      background: var(--adocforge-action-hover-background, #f1f3f4);
+    }
+
+    .editor-action:focus-visible {
+      outline: 3px solid var(--adocforge-focus-color, #0b57d0);
+      outline-offset: 2px;
+    }
+
+    .editor-action[disabled] {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .editor-action-icon {
+      display: inline-flex;
+      inline-size: 1rem;
+      block-size: 1rem;
+    }
+
+    .editor-action-icon svg {
+      inline-size: 100%;
+      block-size: 100%;
+    }
+
+    .file-input {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .file-error {
+      margin: 0 0 0.5rem;
+      color: var(--adocforge-error-color, #b3261e);
+      font-size: 0.8125rem;
     }
 
     .save-status {
@@ -151,6 +218,7 @@ export class AdocForgeEditor extends LitElement {
   #documentUpdatedAt = ''
   #editVersion = 0
   #editorView: EditorView | undefined
+  #fileError = ''
   #outline: OutlineItem[] = []
   #previewError = ''
   #previewGeneration = 0
@@ -192,6 +260,35 @@ export class AdocForgeEditor extends LitElement {
                 : null
             }
           </div>
+          <div class="editor-actions" aria-label="Document actions">
+            <button
+              class="editor-action import-action"
+              type="button"
+              ?disabled=${this.readonly}
+              @click=${this.#chooseImport}
+            >
+              <span class="editor-action-icon import-icon" aria-hidden="true"></span>
+              <span>Import</span>
+            </button>
+            <button
+              class="editor-action export-action"
+              type="button"
+              ?disabled=${this.value.length === 0}
+              @click=${this.#downloadFromToolbar}
+            >
+              <span class="editor-action-icon export-icon" aria-hidden="true"></span>
+              <span>Export</span>
+            </button>
+            <input
+              class="file-input"
+              type="file"
+              accept=".adoc,.asciidoc,text/asciidoc,text/plain"
+              tabindex="-1"
+              aria-hidden="true"
+              @change=${this.#handleFileSelection}
+            />
+          </div>
+          ${this.#fileError ? html`<p class="file-error" role="alert">${this.#fileError}</p>` : null}
           <div class="editor-surface"></div>
         </div>
         <aside class="reference-pane" aria-label="Document reference">
@@ -213,6 +310,7 @@ export class AdocForgeEditor extends LitElement {
   }
 
   protected firstUpdated(): void {
+    this.#renderActionIcons()
     const parent = this.renderRoot.querySelector<HTMLElement>('.editor-surface')
     if (!parent) throw new Error('AdocForge editor surface was not rendered')
 
@@ -227,18 +325,7 @@ export class AdocForgeEditor extends LitElement {
           EditorView.updateListener.of((update) => {
             if (!update.docChanged || this.#syncingExternalValue) return
 
-            const value = update.state.doc.toString()
-            this.value = value
-            this.#editVersion++
-            this.#saveStatus = 'unsaved'
-            this.#scheduleSave()
-            this.dispatchEvent(
-              new CustomEvent<AdocForgeChangeDetail>('adocforge-change', {
-                bubbles: true,
-                composed: true,
-                detail: { value },
-              }),
-            )
+            this.#commitUserValue(update.state.doc.toString())
           }),
         ],
       }),
@@ -247,6 +334,7 @@ export class AdocForgeEditor extends LitElement {
   }
 
   protected updated(changed: PropertyValues<this>): void {
+    this.#renderActionIcons()
     const view = this.#editorView
     if (!view) return
 
@@ -291,6 +379,109 @@ export class AdocForgeEditor extends LitElement {
     } else {
       super.focus(options)
     }
+  }
+
+  async importDocument(file: Blob & { name?: string }): Promise<void> {
+    try {
+      if (file.size > MAX_IMPORT_BYTES) {
+        throw new Error('AsciiDoc files must be 10 MiB or smaller')
+      }
+
+      const value = await file.text()
+      if (value.includes('\0')) throw new Error('Binary files cannot be imported as AsciiDoc')
+
+      this.#fileError = ''
+      this.#commitUserValue(value)
+      this.dispatchEvent(
+        new CustomEvent<AdocForgeImportDetail>('adocforge-import', {
+          bubbles: true,
+          composed: true,
+          detail: { name: file.name ?? '', size: file.size, value },
+        }),
+      )
+    } catch (error: unknown) {
+      this.#fileError = error instanceof Error ? error.message : 'AsciiDoc import failed'
+      this.dispatchEvent(
+        new CustomEvent<AdocForgeImportErrorDetail>('adocforge-import-error', {
+          bubbles: true,
+          composed: true,
+          detail: { error },
+        }),
+      )
+      this.requestUpdate()
+      throw error
+    }
+  }
+
+  createExportBlob(): Blob {
+    return new Blob([this.value], { type: ASCIIDOC_MIME_TYPE })
+  }
+
+  downloadDocument(filename = this.#defaultFilename()): void {
+    const url = URL.createObjectURL(this.createExportBlob())
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = this.#normalizeFilename(filename)
+    anchor.hidden = true
+    document.body.append(anchor)
+    anchor.click()
+    anchor.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 0)
+  }
+
+  #commitUserValue(value: string): void {
+    this.value = value
+    this.#editVersion++
+    this.#saveStatus = 'unsaved'
+    this.#scheduleSave()
+    this.dispatchEvent(
+      new CustomEvent<AdocForgeChangeDetail>('adocforge-change', {
+        bubbles: true,
+        composed: true,
+        detail: { value },
+      }),
+    )
+  }
+
+  #chooseImport(): void {
+    this.renderRoot.querySelector<HTMLInputElement>('.file-input')?.click()
+  }
+
+  async #handleFileSelection(event: Event): Promise<void> {
+    const input = event.currentTarget as HTMLInputElement
+    const file = input.files?.[0]
+    input.value = ''
+    if (!file) return
+
+    try {
+      await this.importDocument(file)
+    } catch {
+      // importDocument exposes failure through visible state and an event.
+    }
+  }
+
+  #downloadFromToolbar(): void {
+    this.downloadDocument()
+  }
+
+  #renderActionIcons(): void {
+    const importContainer = this.renderRoot.querySelector('.import-icon')
+    const exportContainer = this.renderRoot.querySelector('.export-icon')
+    if (importContainer && importContainer.childElementCount === 0) {
+      importContainer.append(createElement(ImportIcon, { 'stroke-width': 2 }))
+    }
+    if (exportContainer && exportContainer.childElementCount === 0) {
+      exportContainer.append(createElement(Download, { 'stroke-width': 2 }))
+    }
+  }
+
+  #defaultFilename(): string {
+    return this.documentId || this.#documentTitle || this.#titleFromSource(this.value)
+  }
+
+  #normalizeFilename(filename: string): string {
+    const trimmed = filename.trim() || 'document'
+    return /\.(?:adoc|asciidoc)$/i.test(trimmed) ? trimmed : `${trimmed}.adoc`
   }
 
   #readonlyExtensions() {

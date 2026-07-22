@@ -64,6 +64,52 @@ describe('AdocForgeEditor', () => {
     expect(changeCount).toBe(0)
   })
 
+  it('imports an AsciiDoc file as a user change', async () => {
+    registerAdocForgeEditor()
+    const editor = document.createElement(ADOC_FORGE_EDITOR_TAG) as AdocForgeEditor
+    const changes: string[] = []
+    editor.addEventListener('adocforge-change', (event) => changes.push(event.detail.value))
+    document.body.append(editor)
+    await editor.updateComplete
+
+    const file = new File(['= Imported\n\nDocument body.'], 'notes.adoc', {
+      type: 'text/asciidoc',
+    })
+    await editor.importDocument(file)
+    await editor.updateComplete
+
+    expect(editor.value).toBe('= Imported\n\nDocument body.')
+    expect(changes).toEqual(['= Imported\n\nDocument body.'])
+    expect(editor.shadowRoot?.querySelector('.cm-content')?.textContent).toContain('Imported')
+  })
+
+  it('rejects binary input and reports the import error', async () => {
+    registerAdocForgeEditor()
+    const editor = document.createElement(ADOC_FORGE_EDITOR_TAG) as AdocForgeEditor
+    const errors: unknown[] = []
+    editor.addEventListener('adocforge-import-error', (event) => errors.push(event.detail.error))
+    document.body.append(editor)
+    await editor.updateComplete
+
+    await expect(editor.importDocument(new File(['AsciiDoc\0binary'], 'bad.adoc'))).rejects.toThrow(
+      'Binary files',
+    )
+    await editor.updateComplete
+
+    expect(errors).toHaveLength(1)
+    expect(editor.shadowRoot?.querySelector('.file-error')?.textContent).toContain('Binary files')
+  })
+
+  it('creates an AsciiDoc export blob from the canonical value', async () => {
+    const editor = new AdocForgeEditor()
+    editor.value = '= Exported'
+
+    const blob = editor.createExportBlob()
+
+    expect(blob.type).toBe('text/asciidoc;charset=utf-8')
+    expect(await blob.text()).toBe('= Exported')
+  })
+
   it('debounces preview conversion and sanitizes rendered HTML', async () => {
     vi.useFakeTimers()
     const convert = vi.fn((source: string) =>

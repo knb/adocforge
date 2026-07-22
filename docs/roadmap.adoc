@@ -25,7 +25,7 @@
 
 * [x] Implement the IndexedDB storage adapter.
 * [x] Add autosave state and reload recovery.
-* [ ] Add `.adoc` import and export.
+* [x] Add `.adoc` import and export.
 
 == Phase 4: AI Assistance
 

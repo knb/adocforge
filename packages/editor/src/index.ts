@@ -5,6 +5,8 @@ export {
 } from './adoc-forge-editor.js'
 export type {
   AdocForgeChangeDetail,
+  AdocForgeImportDetail,
+  AdocForgeImportErrorDetail,
   AdocForgePersistenceDetail,
   AdocForgePersistenceErrorDetail,
 } from './events.js'

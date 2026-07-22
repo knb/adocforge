@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
 
 test('edits AsciiDoc and updates the sanitized preview', async ({ page }) => {
   await page.goto('/')
@@ -36,4 +37,29 @@ test('edits AsciiDoc and updates the sanitized preview', async ({ page }) => {
     )
     .toBe(nextValue)
   await expect(restoredEditor.locator('.save-status')).toHaveText('Saved')
+})
+
+test('imports and exports an AsciiDoc file', async ({ page }) => {
+  await page.goto('/')
+
+  const editor = page.locator('adoc-forge-editor')
+  const imported = '= Imported notes\n\n== Details\n\nLoaded from disk.'
+  await editor.locator('.file-input').setInputFiles({
+    name: 'imported.adoc',
+    mimeType: 'text/asciidoc',
+    buffer: Buffer.from(imported),
+  })
+
+  await expect(editor.locator('.cm-content')).toContainText('Imported notes')
+  await expect(editor.locator('.preview-content')).toContainText('Loaded from disk.')
+  await expect(editor.locator('.save-status')).toHaveText('Saved')
+
+  const downloadPromise = page.waitForEvent('download')
+  await editor.getByRole('button', { name: 'Export' }).click()
+  const download = await downloadPromise
+
+  expect(download.suggestedFilename()).toBe('field-notes.adoc')
+  const path = await download.path()
+  expect(path).not.toBeNull()
+  expect(await readFile(path, 'utf8')).toBe(imported)
 })
