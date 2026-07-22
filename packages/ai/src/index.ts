@@ -14,8 +14,13 @@ export interface AIResponse {
   replacement: string
 }
 
+export interface AIStreamChunk {
+  delta: string
+}
+
 export interface AIProvider {
   complete(request: AIRequest, signal?: AbortSignal): Promise<AIResponse>
+  stream?(request: AIRequest, signal?: AbortSignal): AsyncIterable<AIStreamChunk>
 }
 
 export type AdocForgeAIErrorCode =
@@ -44,11 +49,37 @@ export async function runAIOperation(
     throwIfAborted(signal)
     return validateResponse(response)
   } catch (error: unknown) {
-    if (error instanceof AdocForgeAIError) throw error
-    if (signal?.aborted || isAbortError(error)) {
-      throw new AdocForgeAIError('aborted', 'AI operation was cancelled', { cause: error })
+    throw normalizeError(error, signal)
+  }
+}
+
+export async function* streamAIOperation(
+  provider: AIProvider,
+  request: AIRequest,
+  signal?: AbortSignal,
+): AsyncGenerator<AIStreamChunk> {
+  validateRequest(request)
+  throwIfAborted(signal)
+
+  if (!provider.stream) {
+    const response = await runAIOperation(provider, request, signal)
+    yield { delta: response.replacement }
+    return
+  }
+
+  let replacement = ''
+  try {
+    for await (const chunk of provider.stream(request, signal)) {
+      throwIfAborted(signal)
+      const validated = validateChunk(chunk)
+      if (validated.delta.length === 0) continue
+      replacement += validated.delta
+      yield validated
     }
-    throw new AdocForgeAIError('provider_error', 'AI provider failed', { cause: error })
+    throwIfAborted(signal)
+    validateResponse({ replacement })
+  } catch (error: unknown) {
+    throw normalizeError(error, signal)
   }
 }
 
@@ -80,6 +111,18 @@ function validateResponse(response: unknown): AIResponse {
   return { replacement: response.replacement }
 }
 
+function validateChunk(chunk: unknown): AIStreamChunk {
+  if (
+    typeof chunk !== 'object' ||
+    chunk === null ||
+    !('delta' in chunk) ||
+    typeof chunk.delta !== 'string'
+  ) {
+    throw new AdocForgeAIError('invalid_response', 'AI provider returned an invalid stream chunk')
+  }
+  return { delta: chunk.delta }
+}
+
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
     throw new AdocForgeAIError('aborted', 'AI operation was cancelled', { cause: signal.reason })
@@ -87,5 +130,13 @@ function throwIfAborted(signal?: AbortSignal): void {
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === 'AbortError'
+  return (error instanceof DOMException || error instanceof Error) && error.name === 'AbortError'
+}
+
+function normalizeError(error: unknown, signal?: AbortSignal): AdocForgeAIError {
+  if (error instanceof AdocForgeAIError) return error
+  if (signal?.aborted || isAbortError(error)) {
+    return new AdocForgeAIError('aborted', 'AI operation was cancelled', { cause: error })
+  }
+  return new AdocForgeAIError('provider_error', 'AI provider failed', { cause: error })
 }

@@ -30,7 +30,7 @@
 == Phase 4: AI Assistance
 
 * [x] Implement vendor-independent rewrite, summarize, and continue operations.
-* Support cancellation and optional streaming.
+* [x] Support cancellation and optional streaming.
 * Require explicit Accept or Reject for generated changes.
 
 == Phase 5: Public Release

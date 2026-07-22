@@ -25,9 +25,11 @@ The returned `replacement` is a proposal. Applying it to a document is the edito
 
 == Provider Contract
 
-Providers implement `complete(request, signal?)`. Provider-specific clients, credentials, and transmission policy remain outside this package.
+Providers implement `complete(request, signal?)` and may implement `stream(request, signal?)`. Provider-specific clients, credentials, and transmission policy remain outside this package.
 
-`runAIOperation()` validates requests and responses. Failures are reported as `AdocForgeAIError` with one of these codes:
+`streamAIOperation()` yields `{ delta }` chunks. When the provider does not implement streaming, it yields the completion result as one chunk. Empty streams and malformed chunks are rejected.
+
+Both operation runners validate requests and responses. Failures are reported as `AdocForgeAIError` with one of these codes:
 
 * `invalid_request`
 * `invalid_response`

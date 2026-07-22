@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { AdocForgeAIError, runAIOperation, type AIProvider, type AIRequest } from '../src/index.js'
+import {
+  AdocForgeAIError,
+  runAIOperation,
+  streamAIOperation,
+  type AIProvider,
+  type AIRequest,
+  type AIStreamChunk,
+} from '../src/index.js'
 
 const rewriteRequest: AIRequest = {
   operation: 'rewrite',
@@ -80,3 +87,72 @@ describe('runAIOperation', () => {
     }
   })
 })
+
+describe('streamAIOperation', () => {
+  it('yields validated provider chunks in order', async () => {
+    const stream = vi.fn(async function* (): AsyncGenerator<AIStreamChunk> {
+      await Promise.resolve()
+      yield { delta: 'Concise ' }
+      yield { delta: 'paragraph.' }
+    })
+    const complete = vi.fn().mockResolvedValue({ replacement: 'Unused' })
+    const provider: AIProvider = {
+      complete,
+      stream,
+    }
+
+    await expect(collect(streamAIOperation(provider, rewriteRequest))).resolves.toBe(
+      'Concise paragraph.',
+    )
+    expect(stream).toHaveBeenCalledWith(rewriteRequest, undefined)
+    expect(complete).not.toHaveBeenCalled()
+  })
+
+  it('falls back to a single completion chunk', async () => {
+    const provider: AIProvider = {
+      complete: vi.fn().mockResolvedValue({ replacement: 'Complete proposal' }),
+    }
+
+    const chunks: AIStreamChunk[] = []
+    for await (const chunk of streamAIOperation(provider, rewriteRequest)) chunks.push(chunk)
+
+    expect(chunks).toEqual([{ delta: 'Complete proposal' }])
+  })
+
+  it('rejects an empty stream', async () => {
+    const provider: AIProvider = {
+      complete: vi.fn().mockResolvedValue({ replacement: 'Unused' }),
+      stream: async function* () {
+        await Promise.resolve()
+        yield { delta: '' }
+      },
+    }
+
+    await expect(collect(streamAIOperation(provider, rewriteRequest))).rejects.toMatchObject({
+      code: 'invalid_response',
+    })
+  })
+
+  it('stops exposing chunks after cancellation', async () => {
+    const controller = new AbortController()
+    const provider: AIProvider = {
+      complete: vi.fn().mockResolvedValue({ replacement: 'Unused' }),
+      stream: async function* () {
+        await Promise.resolve()
+        yield { delta: 'First' }
+        yield { delta: 'Second' }
+      },
+    }
+    const iterator = streamAIOperation(provider, rewriteRequest, controller.signal)
+
+    await expect(iterator.next()).resolves.toEqual({ done: false, value: { delta: 'First' } })
+    controller.abort()
+    await expect(iterator.next()).rejects.toMatchObject({ code: 'aborted' })
+  })
+})
+
+async function collect(stream: AsyncIterable<AIStreamChunk>): Promise<string> {
+  let result = ''
+  for await (const chunk of stream) result += chunk.delta
+  return result
+}
