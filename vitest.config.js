@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
-const packagesDir = path.resolve(rootDir, 'packages')
+const packagesDir = path.resolve(rootDir, 'legacy/packages')
 
 export default defineConfig({
   resolve: {
@@ -17,6 +17,6 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['packages/**/test/**/*.test.js', 'app/javascript/**/test/**/*.test.js'],
+    include: ['packages/**/test/**/*.test.{js,ts}', 'legacy/packages/**/test/**/*.test.js'],
   },
 })

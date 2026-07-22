@@ -4,7 +4,9 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "examples/*"
+    "apps/*",
+    "legacy/packages/*",
+    "legacy/examples/*"
   ],
   "engines": {
     "node": ">=20"

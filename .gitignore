@@ -1,7 +1,9 @@
 node_modules/
 dist/
 packages/*/dist/
-examples/*/dist/
+apps/*/dist/
+legacy/packages/*/dist/
+legacy/examples/*/dist/
 *.tgz
 .npmrc
 coverage/

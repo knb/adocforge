@@ -8,7 +8,7 @@ import {
 } from './package-workspaces.mjs'
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..')
-const packagesDir = join(rootDir, 'packages')
+const packagesDir = join(rootDir, 'legacy', 'packages')
 
 /** @param {string} workspace */
 function packageDir(workspace) {

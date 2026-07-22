@@ -6,7 +6,19 @@ This repository is being migrated from editor components extracted from KBMemo t
 
 See [ADOCFORGE_BOOTSTRAP.md](ADOCFORGE_BOOTSTRAP.md) for the product scope, architecture, implementation phases, and release requirements.
 
-## Current Packages
+## Target Packages
+
+AdocForge will expose three public packages:
+
+| Package | Role |
+| --- | --- |
+| `@adocforge/core` | AsciiDoc processing, outline, diagnostics, and persistence interfaces |
+| `@adocforge/ai` | Vendor-independent AI request and response contracts |
+| `@adocforge/editor` | CodeMirror-based `<adoc-forge-editor>` Web Component |
+
+## Legacy Packages
+
+The extracted KBMemo packages remain under `legacy/packages` as tested migration inputs. They are not the target public API.
 
 | Package | Role |
 | --- | --- |
