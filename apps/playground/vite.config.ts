@@ -5,6 +5,7 @@ import { defineConfig } from 'vite'
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
+  base: process.env.GITHUB_ACTIONS === 'true' ? '/adocforge/' : '/',
   resolve: {
     alias: [
       {
