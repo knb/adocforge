@@ -164,6 +164,15 @@ importers:
       '@adocforge/core':
         specifier: workspace:*
         version: link:../core
+      '@codemirror/state':
+        specifier: ^6.6.0
+        version: 6.7.1
+      '@codemirror/view':
+        specifier: ^6.43.0
+        version: 6.43.6
+      codemirror:
+        specifier: ^6.0.2
+        version: 6.0.2
       lit:
         specifier: ^3.3.2
         version: 3.3.3
