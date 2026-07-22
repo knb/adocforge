@@ -23,7 +23,7 @@
 
 == Phase 3: Local Persistence
 
-* Implement the IndexedDB storage adapter.
+* [x] Implement the IndexedDB storage adapter.
 * Add autosave state, recovery, and `.adoc` import/export.
 
 == Phase 4: AI Assistance
