@@ -2,10 +2,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import {
-  KBMEMO_PACKAGE_VERSION,
-  KBMEMO_WORKSPACES,
-} from './package-workspaces.mjs'
+import { KBMEMO_PACKAGE_VERSION, KBMEMO_WORKSPACES } from './package-workspaces.mjs'
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..')
 const packagesDir = join(rootDir, 'legacy', 'packages')
@@ -49,7 +46,9 @@ for (const workspace of KBMEMO_WORKSPACES) {
   for (const [name, version] of Object.entries(json.dependencies ?? {})) {
     if (!name.startsWith('@kbmemo/')) continue
     if (version !== KBMEMO_PACKAGE_VERSION) {
-      console.error(`${workspace}: dependency ${name} must be ${KBMEMO_PACKAGE_VERSION} (got ${version})`)
+      console.error(
+        `${workspace}: dependency ${name} must be ${KBMEMO_PACKAGE_VERSION} (got ${version})`,
+      )
       failed = true
     }
   }
@@ -61,4 +60,6 @@ if (failed) {
   process.exit(1)
 }
 
-console.log(`All ${KBMEMO_WORKSPACES.length} packages are publish-ready at ${KBMEMO_PACKAGE_VERSION}.`)
+console.log(
+  `All ${KBMEMO_WORKSPACES.length} packages are publish-ready at ${KBMEMO_PACKAGE_VERSION}.`,
+)

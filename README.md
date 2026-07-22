@@ -10,23 +10,23 @@ See [ADOCFORGE_BOOTSTRAP.md](ADOCFORGE_BOOTSTRAP.md) for the product scope, arch
 
 AdocForge will expose three public packages:
 
-| Package | Role |
-| --- | --- |
-| `@adocforge/core` | AsciiDoc processing, outline, diagnostics, and persistence interfaces |
-| `@adocforge/ai` | Vendor-independent AI request and response contracts |
-| `@adocforge/editor` | CodeMirror-based `<adoc-forge-editor>` Web Component |
+| Package             | Role                                                                  |
+| ------------------- | --------------------------------------------------------------------- |
+| `@adocforge/core`   | AsciiDoc processing, outline, diagnostics, and persistence interfaces |
+| `@adocforge/ai`     | Vendor-independent AI request and response contracts                  |
+| `@adocforge/editor` | CodeMirror-based `<adoc-forge-editor>` Web Component                  |
 
 ## Legacy Packages
 
 The extracted KBMemo packages remain under `legacy/packages` as tested migration inputs. They are not the target public API.
 
-| Package | Role |
-| --- | --- |
+| Package                   | Role                                                                |
+| ------------------------- | ------------------------------------------------------------------- |
 | `@kbmemo/adoc-codemirror` | Asciidoctor AST highlighting and edit-unit parsing for CodeMirror 6 |
-| `@kbmemo/adoc-preview` | Live AsciiDoc HTML preview |
-| `@kbmemo/adoc-wysiwyg` | Block-based AsciiDoc WYSIWYG editor |
-| `@kbmemo/adoc-kbmemo` | Host adapters and optional wiki, diagram, and math extensions |
-| `@kbmemo/adoc-editor` | Umbrella entry point |
+| `@kbmemo/adoc-preview`    | Live AsciiDoc HTML preview                                          |
+| `@kbmemo/adoc-wysiwyg`    | Block-based AsciiDoc WYSIWYG editor                                 |
+| `@kbmemo/adoc-kbmemo`     | Host adapters and optional wiki, diagram, and math extensions       |
+| `@kbmemo/adoc-editor`     | Umbrella entry point                                                |
 
 ## Requirements
 

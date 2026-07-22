@@ -1,0 +1,10 @@
+packages:
+  - packages/*
+  - apps/*
+  - legacy/packages/*
+  - legacy/examples/*
+
+linkWorkspacePackages: true
+
+onlyBuiltDependencies:
+  - esbuild

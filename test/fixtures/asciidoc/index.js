@@ -5,7 +5,10 @@ import { fileURLToPath } from 'node:url'
 const fixtureDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(fixtureDir, '..', '..', '..')
 
-export const ROADMAP_PATH = join(repoRoot, 'docs/architecture/asciidoc-syntax-coverage-roadmap.adoc')
+export const ROADMAP_PATH = join(
+  repoRoot,
+  'docs/architecture/asciidoc-syntax-coverage-roadmap.adoc',
+)
 
 /** Minimal document header for per-section HL/EU smoke tests. */
 export const SYNTAX_REF_DOCUMENT_HEADER = `= Syntax ref smoke

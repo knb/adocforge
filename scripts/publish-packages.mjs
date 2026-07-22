@@ -3,10 +3,7 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import {
-  KBMEMO_PUBLISH_ORDER,
-  KBMEMO_PACKAGE_VERSION,
-} from './package-workspaces.mjs'
+import { KBMEMO_PUBLISH_ORDER, KBMEMO_PACKAGE_VERSION } from './package-workspaces.mjs'
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dryRun = process.argv.includes('--dry-run')
@@ -47,4 +44,8 @@ for (const workspace of KBMEMO_PUBLISH_ORDER) {
   execFileSync('npm', args, { cwd: rootDir, stdio: 'inherit' })
 }
 
-console.log(dryRun ? 'Dry-run publish completed.' : `Published ${KBMEMO_PUBLISH_ORDER.length} packages at ${KBMEMO_PACKAGE_VERSION}.`)
+console.log(
+  dryRun
+    ? 'Dry-run publish completed.'
+    : `Published ${KBMEMO_PUBLISH_ORDER.length} packages at ${KBMEMO_PACKAGE_VERSION}.`,
+)

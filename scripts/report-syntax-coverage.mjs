@@ -118,14 +118,20 @@ function printSummary(report) {
   const wholeFailures = Number(!report.wholeDocument.hlOk || !report.wholeDocument.euOk)
 
   console.log(`Syntax coverage report (${report.fixtureIds} syntax-ref ids)`)
-  console.log(`  whole document: HL=${report.wholeDocument.highlightSpans} spans, EU=${report.wholeDocument.editUnits} units`)
-  console.log(`  per-section smoke: ${report.sections.length} sections, ${sectionFailures} failures`)
+  console.log(
+    `  whole document: HL=${report.wholeDocument.highlightSpans} spans, EU=${report.wholeDocument.editUnits} units`,
+  )
+  console.log(
+    `  per-section smoke: ${report.sections.length} sections, ${sectionFailures} failures`,
+  )
   console.log(`  fixture ↔ roadmap sync: ok (${report.fixtureIds} ids)`)
 
   if (wholeFailures > 0 || sectionFailures > 0) {
     for (const section of [report.wholeDocument, ...report.sections]) {
       if (section.hlOk && section.euOk) continue
-      console.error(`  ${section.id}: HL=${section.hlOk ? 'ok' : section.hlError}, EU=${section.euOk ? 'ok' : section.euError}`)
+      console.error(
+        `  ${section.id}: HL=${section.hlOk ? 'ok' : section.hlError}, EU=${section.euOk ? 'ok' : section.euError}`,
+      )
     }
     process.exit(1)
   }

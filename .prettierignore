@@ -1,0 +1,6 @@
+**/dist/
+**/node_modules/
+coverage/
+legacy/
+pnpm-lock.yaml
+ADOCFORGE_BOOTSTRAP.md

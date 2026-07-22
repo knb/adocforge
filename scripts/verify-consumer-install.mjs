@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import {
-  KBMEMO_PACKAGE_VERSION,
-  KBMEMO_WORKSPACES,
-} from './package-workspaces.mjs'
+import { KBMEMO_WORKSPACES } from './package-workspaces.mjs'
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..')
 
