@@ -26,6 +26,8 @@ pnpm build
 
 Run `pnpm test:e2e` for browser-level editor workflows.
 
+Run `pnpm test:a11y` for the focused axe-core WCAG A/AA audit and keyboard workflow. The full E2E command includes these checks.
+
 Run `pnpm pack:packages`, `pnpm verify:consumer`, and `pnpm verify:publish` before a release candidate. These commands must inspect the current `@adocforge/*` packages before Phase 5 is complete.
 
 == Playground

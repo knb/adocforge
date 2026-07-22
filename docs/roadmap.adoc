@@ -36,7 +36,7 @@
 == Phase 5: Public Release
 
 * [x] Complete API documentation and integration examples.
-* [ ] Add automated accessibility checks.
+* [x] Add automated accessibility checks.
 * [ ] Inspect current package tarballs and an isolated consumer installation.
 * [ ] Complete release automation for the `@adocforge/*` packages.
 * Publish only after explicit approval.
