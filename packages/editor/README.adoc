@@ -1,0 +1,38 @@
+= `@adocforge/editor`
+
+Framework-independent AdocForge editor Web Component.
+
+== Registration
+
+[source,typescript]
+----
+import { registerAdocForgeEditor } from '@adocforge/editor'
+
+registerAdocForgeEditor()
+----
+
+Registration is explicit and idempotent. Importing the package does not modify the global custom element registry.
+
+== Public API
+
+`value: string`:: Canonical AsciiDoc source. External assignment updates CodeMirror without emitting a user change.
+
+`readonly: boolean`:: Disables editing while preserving selection and reading behavior.
+
+`label: string`:: Visible and accessible name for the source editor.
+
+`previewDelay: number`:: Preview debounce delay in milliseconds. Defaults to 300.
+
+`processor: AsciiDocProcessor`:: Replaceable conversion implementation. Defaults to `@adocforge/core`.
+
+`focus()`:: Moves focus to the source editor.
+
+The CodeMirror `EditorView` is private and is not part of the public API.
+
+== Events
+
+`adocforge-change` bubbles across the Shadow DOM boundary after a user edit. Its detail is `{ value: string }`. Assigning `value` from the host does not emit this event.
+
+== Preview Security
+
+Converted HTML is sanitized with DOMPurify before rendering. A custom processor does not bypass this editor-side boundary.

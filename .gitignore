@@ -7,3 +7,5 @@ legacy/examples/*/dist/
 *.tgz
 .npmrc
 coverage/
+playwright-report/
+test-results/

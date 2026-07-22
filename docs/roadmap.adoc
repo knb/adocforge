@@ -19,7 +19,7 @@
 
 * [x] Integrate CodeMirror 6 without exposing `EditorView` publicly.
 * [x] Add debounced preview and outline updates.
-* Define the stable Web Component properties, methods, and events.
+* [x] Define the stable Web Component properties, methods, and events.
 
 == Phase 3: Local Persistence
 

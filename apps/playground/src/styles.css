@@ -1,0 +1,59 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  color: #202124;
+  background: #f7f8f8;
+}
+
+body {
+  margin: 0;
+}
+
+header {
+  border-block-end: 1px solid #c4c7c5;
+  background: #ffffff;
+}
+
+header,
+main {
+  padding-inline: clamp(1rem, 4%, 4rem);
+}
+
+header h1 {
+  max-inline-size: 90rem;
+  margin: 0 auto;
+  padding-block: 1rem;
+  font-size: 1.5rem;
+  letter-spacing: 0;
+}
+
+main {
+  max-inline-size: 90rem;
+  margin-inline: auto;
+  padding-block: 1.5rem;
+}
+
+adoc-forge-editor {
+  --adocforge-editor-min-height: min(60vh, 42rem);
+  --adocforge-preview-min-height: 20rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #e3e3e3;
+    background: #1f1f1f;
+  }
+
+  header {
+    border-color: #5f6368;
+    background: #282828;
+  }
+
+  adoc-forge-editor {
+    --adocforge-color: #e3e3e3;
+    --adocforge-background: #1f1f1f;
+    --adocforge-border-color: #9aa0a6;
+    --adocforge-divider-color: #5f6368;
+    --adocforge-link-color: #a8c7fa;
+  }
+}
