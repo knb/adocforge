@@ -30,7 +30,7 @@
     "build:demo": "pnpm --filter adoc-editor-demo run build"
   },
   "dependencies": {
-    "@asciidoctor/core": "^4.0.4",
+    "@asciidoctor/core": "^4.0.6",
     "@codemirror/autocomplete": "^6.20.2",
     "@codemirror/commands": "^6.10.3",
     "@codemirror/search": "^6.5.11",
