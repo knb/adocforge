@@ -7,10 +7,15 @@
 Package publication is never triggered by a push or pull request. The release workflow must be started manually. Its publish job additionally requires:
 
 * the `publish` workflow input set to true;
+* the workflow run targeting the `main` branch;
 * successful verification;
 * approval of the protected GitHub `npm` Environment;
-* an `NPM_TOKEN` Environment secret;
-* npm trusted publishing or token access for the `@adocforge` scope.
+* npm trusted publishing configured for each `@adocforge` package.
+
+The workflow uses npm trusted publishing with GitHub Actions OIDC. It does not use a
+long-lived npm publish token. Configure each package on npmjs.com with organization or
+user `knb`, repository `adocforge`, workflow filename `release.yml`, environment `npm`,
+and permission to publish.
 
 Running `pnpm publish:packages` locally is always a dry-run. Actual publication also requires the `--publish` argument and `ADOCFORGE_PUBLISH_APPROVED=yes`.
 
@@ -60,11 +65,11 @@ Run the `Release AdocForge packages` workflow with `publish` left false. This re
 After explicit release approval:
 
 . Confirm the release commit is on `main` and the worktree versions are not `0.0.0`.
-. Run `Release AdocForge packages` manually with `publish` set to true.
+. Run `Release AdocForge packages` manually from `main` with `publish` set to true.
 . Review and approve the protected `npm` Environment deployment.
 . Verify all three packages on npm and install them in a clean project.
 
-Packages are published in dependency order: `@adocforge/core`, `@adocforge/ai`, then `@adocforge/editor`. Provenance is requested for each publish.
+Packages are published in dependency order: `@adocforge/core`, `@adocforge/ai`, then `@adocforge/editor`. The publish job grants only read access to repository contents plus permission to request a short-lived OIDC token. Provenance is requested for each publish.
 
 == Recovery
 
