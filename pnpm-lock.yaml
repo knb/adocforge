@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@asciidoctor/core':
-        specifier: ^4.0.4
-        version: 4.0.5
+        specifier: ^4.0.7
+        version: 4.0.7
       '@codemirror/autocomplete':
         specifier: ^6.20.2
         version: 6.20.3
@@ -94,8 +94,8 @@ importers:
   legacy/examples/adoc-editor-demo:
     dependencies:
       '@asciidoctor/core':
-        specifier: ^4.0.4
-        version: 4.0.5
+        specifier: ^4.0.7
+        version: 4.0.7
       '@codemirror/state':
         specifier: ^6.6.0
         version: 6.7.1
@@ -165,8 +165,8 @@ importers:
   packages/core:
     dependencies:
       '@asciidoctor/core':
-        specifier: ^4.0.5
-        version: 4.0.5
+        specifier: ^4.0.7
+        version: 4.0.7
 
   packages/editor:
     dependencies:
@@ -215,8 +215,8 @@ packages:
   '@asamuzakjp/nwsapi@2.3.9':
     resolution: {integrity: sha512-n8GuYSrI9bF7FFZ/SjhwevlHc8xaVlb/7HmHelnc/PZXBD2ZR49NnN9sMMuDdEGPeeRQ5d0hqlSlEpgCX3Wl0Q==}
 
-  '@asciidoctor/core@4.0.5':
-    resolution: {integrity: sha512-Rg6w6YHU1FqACkrE62f5oqI8LHhM7Dp9eWZFQfXl/0fCYYLgPSyNbGqBTpWbGYlSaNp3yfB0naeQhlWH1ZibPA==}
+  '@asciidoctor/core@4.0.7':
+    resolution: {integrity: sha512-uJFZD/Ca2+z8rC9Sq5ih7HkpmzoeJXkXCDEoilNRCnXMw33k2zh5U2RhIGvm+t9JFxDjEs/KtzRdD9ugoG+f9A==}
     engines: {node: '>=20'}
 
   '@axe-core/playwright@4.12.1':
@@ -2114,7 +2114,7 @@ snapshots:
 
   '@asamuzakjp/nwsapi@2.3.9': {}
 
-  '@asciidoctor/core@4.0.5': {}
+  '@asciidoctor/core@4.0.7': {}
 
   '@axe-core/playwright@4.12.1(playwright-core@1.61.1)':
     dependencies:
